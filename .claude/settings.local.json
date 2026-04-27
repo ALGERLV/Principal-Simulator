@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(cs|json|yaml|yml\\)$\")",
+      "Bash(git fetch *)"
+    ]
+  }
+}

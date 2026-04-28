@@ -11,6 +11,7 @@ namespace TBS.Unit
         #region Serialized
 
         private UnitData data;
+        private UnitRuntimeParams runtimeParams;
 
         #endregion
 
@@ -41,16 +42,16 @@ namespace TBS.Unit
 
         #region IUnitToken
 
-        public string UnitId => data ? data.UnitId : "";
-        public string DisplayName => data ? data.DisplayName : "";
-        public Faction Faction => data ? data.Faction : Faction.KMT;
-        public UnitTier Tier => data ? data.Tier : UnitTier.Regiment;
-        public UnitGrade Grade => data ? data.Grade : UnitGrade.KMT_Regular;
+        public string UnitId      => data ? data.UnitId      : runtimeParams?.UnitId      ?? "";
+        public string DisplayName => data ? data.DisplayName : runtimeParams?.DisplayName ?? "";
+        public Faction Faction    => data ? data.Faction     : runtimeParams?.Faction      ?? Faction.KMT;
+        public UnitTier Tier      => data ? data.Tier        : runtimeParams?.Tier         ?? UnitTier.Regiment;
+        public UnitGrade Grade    => data ? data.Grade       : runtimeParams?.Grade        ?? UnitGrade.KMT_Regular;
 
-        public int AttackPower => data ? data.AttackPower : 0;
-        public int DefensePower => data ? data.DefensePower : 0;
-        public float MoveSpeedKmPerDay => data ? data.MoveSpeedKmPerDay : 0;
-        public int Firepower => data ? data.Firepower : 0;
+        public int AttackPower        => data ? data.AttackPower        : runtimeParams?.AttackPower       ?? 0;
+        public int DefensePower       => data ? data.DefensePower       : runtimeParams?.DefensePower      ?? 0;
+        public float MoveSpeedKmPerDay => data ? data.MoveSpeedKmPerDay : runtimeParams?.MoveSpeedKmPerDay ?? 25f;
+        public int Firepower          => data ? data.Firepower          : runtimeParams?.Firepower         ?? 0;
 
         public int Strength
         {
@@ -96,6 +97,12 @@ namespace TBS.Unit
         /// </summary>
         public float EffectiveMoveSpeed => MoveSpeedKmPerDay * SpeedModifier;
 
+        private float MoraleRecoveryPerHour        => data ? data.MoraleRecoveryPerHour      : runtimeParams?.MoraleRecoveryPerHour      ?? 2.5f;
+        private float RecuperationSpeedModifier    => data ? data.RecuperationSpeedModifier  : runtimeParams?.RecuperationSpeedModifier  ?? 1f;
+        public  int   ShakenMoraleThreshold        => data ? data.ShakenMoraleThreshold      : runtimeParams?.ShakenMoraleThreshold      ?? 40;
+        public  int   RoutedMoraleThreshold        => data ? data.RoutedMoraleThreshold      : runtimeParams?.RoutedMoraleThreshold      ?? 20;
+        public  int   RoutedStrengthThreshold      => data ? data.RoutedStrengthThreshold    : runtimeParams?.RoutedStrengthThreshold    ?? 1;
+
         #endregion
 
         #region Lifecycle
@@ -133,6 +140,31 @@ namespace TBS.Unit
             SpeedModifier = 1f;
             CanAttack = true;
             CanReceiveOrders = true;
+        }
+
+        public void SetPosition(HexCoord coord)
+        {
+            position = coord;
+        }
+
+        /// <summary>
+        /// 运行时初始化，不依赖 ScriptableObject（测试 / 程序化生成用）
+        /// </summary>
+        public void InitializeRuntime(UnitRuntimeParams p, HexCoord coord)
+        {
+            data = null;
+            runtimeParams = p;
+            position = coord;
+            strength = p.InitialStrength;
+            morale   = p.InitialMorale;
+            supply   = p.InitialSupply;
+            fortificationLevel   = 0;
+            fortificationProgress = 0;
+            AttackModifier    = 0;
+            DefenseModifier   = 0;
+            SpeedModifier     = 1f;
+            CanAttack         = true;
+            CanReceiveOrders  = true;
         }
 
         #endregion
@@ -237,22 +269,20 @@ namespace TBS.Unit
 
         private void TickMoraleRecovery(float deltaHours)
         {
-            if (data == null) return;
+            if (data == null && runtimeParams == null) return;
             if (State == UnitState.Routed)
             {
-                // 溃散时恢复×0.3
-                Morale += Mathf.RoundToInt(data.MoraleRecoveryPerHour * 0.3f * deltaHours);
+                Morale += Mathf.RoundToInt(MoraleRecoveryPerHour * 0.3f * deltaHours);
                 return;
             }
 
-            // 非战斗且持续>1小时才恢复（简化：非Suppressed即可）
             if (State == UnitState.Suppressed) return;
 
             float mult = 1f;
             if (supply >= 3) mult *= 1.5f;
-            else if (supply == 0) return; // 断补：无法自然恢复
+            else if (supply == 0) return;
 
-            Morale += Mathf.RoundToInt(data.MoraleRecoveryPerHour * mult * deltaHours);
+            Morale += Mathf.RoundToInt(MoraleRecoveryPerHour * mult * deltaHours);
         }
 
         private void TickRecuperation(float deltaHours)
@@ -260,7 +290,7 @@ namespace TBS.Unit
             if (State != UnitState.Recuperating) return;
             if (supply <= 0) return;
 
-            recuperationAccum += deltaHours / 24f * data.RecuperationSpeedModifier;
+            recuperationAccum += deltaHours / 24f * RecuperationSpeedModifier;
             if (recuperationAccum >= 1f)
             {
                 recuperationAccum -= 1f;

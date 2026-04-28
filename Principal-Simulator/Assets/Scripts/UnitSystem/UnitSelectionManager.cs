@@ -165,15 +165,18 @@ namespace TBS.UnitSystem
         {
             if (selectedUnit == null) return;
 
-            // 检查是否可以移动
+            // 移动中禁止下令
+            if (selectedUnit.IsMoving)
+            {
+                Debug.Log("UnitSelectionManager: 单位正在移动中");
+                return;
+            }
+
             if (selectedUnit.CanMoveTo(targetCoord))
             {
-                // 执行移动
                 selectedUnit.MoveTo(targetCoord);
-                
-                // 移动后更新高亮
                 ClearHighlights();
-                ShowValidMoveHighlights();
+                // 移动完成后高亮会由下一次选中触发，不在此轮询
             }
             else
             {

@@ -65,7 +65,7 @@ namespace TBS.Unit
             // 已满足崩溃条件则交由 RoutedState 处理
             if (IsRouted(u)) return UnitState.Normal;
 
-            return u.Morale < u.Data.ShakenMoraleThreshold ? UnitState.Shaken : UnitState.Normal;
+            return u.Morale < u.ShakenMoraleThreshold ? UnitState.Shaken : UnitState.Normal;
         }
 
         public void OnEnter(IUnitToken unit)
@@ -81,8 +81,8 @@ namespace TBS.Unit
         static bool IsRouted(Unit u) =>
             u.Strength <= 0 ||
             u.Morale == 0 ||
-            (u.Strength <= u.Data.RoutedStrengthThreshold && u.Morale <= u.Data.RoutedMoraleThreshold) ||
-            (u.Data.Grade == UnitGrade.KMT_Militia && u.Strength <= 2);
+            (u.Strength <= u.RoutedStrengthThreshold && u.Morale <= u.RoutedMoraleThreshold) ||
+            (u.Grade == UnitGrade.KMT_Militia && u.Strength <= 2);
     }
 
     // ---------- 溃散 ----------
@@ -123,8 +123,8 @@ namespace TBS.Unit
         internal static bool IsRouted(Unit u) =>
             u.Strength <= 0 ||
             u.Morale == 0 ||
-            (u.Strength <= u.Data.RoutedStrengthThreshold && u.Morale <= u.Data.RoutedMoraleThreshold) ||
-            (u.Data.Grade == UnitGrade.KMT_Militia && u.Strength <= 2);
+            (u.Strength <= u.RoutedStrengthThreshold && u.Morale <= u.RoutedMoraleThreshold) ||
+            (u.Grade == UnitGrade.KMT_Militia && u.Strength <= 2);
     }
 
     // ---------- 后撤整补 ----------

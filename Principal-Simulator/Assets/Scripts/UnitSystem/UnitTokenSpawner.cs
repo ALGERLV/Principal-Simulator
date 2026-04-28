@@ -8,7 +8,7 @@ namespace TBS.UnitSystem
     public class UnitTokenSpawner : MonoBehaviour
     {
         [Header("生成设置")]
-        public float tokenHeight = 1f;
+        public float tokenHeight = 0.05f;
 
         [Header("默认属性（无 UnitData 时使用）")]
         public string DefaultUnitId   = "88S_262R";
@@ -52,7 +52,12 @@ namespace TBS.UnitSystem
             Vector3 worldPos = hexGrid.CoordToWorldPosition(spawnCoord);
             worldPos.y = tokenHeight;
 
+            var unitsContainer = GameObject.Find("[Units]");
+            if (unitsContainer == null)
+                unitsContainer = new GameObject("[Units]");
+
             var root = new GameObject($"Unit_{DefaultUnitName}");
+            root.transform.SetParent(unitsContainer.transform, false);
             root.transform.position = worldPos;
             root.tag = "UnitToken";
 

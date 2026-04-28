@@ -1,0 +1,160 @@
+{
+  "units": [
+    {
+      "id": 1,
+      "name": "师部",
+      "grade": "国军·精锐",
+      "attack": 2,
+      "defense": 4,
+      "moveSpeed": 20,
+      "firepower": 6,
+      "initMorale": 80,
+      "initSupply": 5,
+      "initStrength": 5
+    },
+    {
+      "id": 2,
+      "name": "步兵团",
+      "grade": "国军·精锐",
+      "attack": 7,
+      "defense": 6,
+      "moveSpeed": 25,
+      "firepower": 4,
+      "initMorale": 80,
+      "initSupply": 4,
+      "initStrength": 5
+    },
+    {
+      "id": 3,
+      "name": "师部",
+      "grade": "国军·正规",
+      "attack": 2,
+      "defense": 3,
+      "moveSpeed": 20,
+      "firepower": 4,
+      "initMorale": 65,
+      "initSupply": 4,
+      "initStrength": 5
+    },
+    {
+      "id": 4,
+      "name": "步兵团",
+      "grade": "国军·正规",
+      "attack": 5,
+      "defense": 5,
+      "moveSpeed": 25,
+      "firepower": 3,
+      "initMorale": 65,
+      "initSupply": 3,
+      "initStrength": 5
+    },
+    {
+      "id": 5,
+      "name": "师部",
+      "grade": "国军·杂牌",
+      "attack": 1,
+      "defense": 2,
+      "moveSpeed": 18,
+      "firepower": 2,
+      "initMorale": 50,
+      "initSupply": 3,
+      "initStrength": 5
+    },
+    {
+      "id": 6,
+      "name": "步兵团",
+      "grade": "国军·杂牌",
+      "attack": 4,
+      "defense": 3,
+      "moveSpeed": 22,
+      "firepower": 2,
+      "initMorale": 50,
+      "initSupply": 2,
+      "initStrength": 5
+    },
+    {
+      "id": 7,
+      "name": "师团司令部",
+      "grade": "日军",
+      "attack": 3,
+      "defense": 4,
+      "moveSpeed": 20,
+      "firepower": 8,
+      "initMorale": 90,
+      "initSupply": 5,
+      "initStrength": 5
+    },
+    {
+      "id": 8,
+      "name": "步兵联队（精锐，第3师团）",
+      "grade": "日军·精锐",
+      "attack": 8,
+      "defense": 7,
+      "moveSpeed": 30,
+      "firepower": 5,
+      "initMorale": 90,
+      "initSupply": 5,
+      "initStrength": 5
+    },
+    {
+      "id": 9,
+      "name": "步兵联队（普通师团）",
+      "grade": "日军·普通",
+      "attack": 7,
+      "defense": 6,
+      "moveSpeed": 28,
+      "firepower": 4,
+      "initMorale": 85,
+      "initSupply": 4,
+      "initStrength": 5
+    },
+    {
+      "id": 10,
+      "name": "海军陆战队",
+      "grade": "日军·特殊",
+      "attack": 9,
+      "defense": 5,
+      "moveSpeed": 25,
+      "firepower": 6,
+      "initMorale": 92,
+      "initSupply": 5,
+      "initStrength": 5
+    },
+    {
+      "id": 11,
+      "name": "师部",
+      "grade": "八路军",
+      "attack": 2,
+      "defense": 3,
+      "moveSpeed": 35,
+      "firepower": 2,
+      "initMorale": 75,
+      "initSupply": 3,
+      "initStrength": 5
+    },
+    {
+      "id": 12,
+      "name": "步兵团（精锐，如685团）",
+      "grade": "八路军·精锐",
+      "attack": 5,
+      "defense": 4,
+      "moveSpeed": 40,
+      "firepower": 2,
+      "initMorale": 75,
+      "initSupply": 3,
+      "initStrength": 5
+    },
+    {
+      "id": 13,
+      "name": "步兵团（普通）",
+      "grade": "八路军·普通",
+      "attack": 4,
+      "defense": 3,
+      "moveSpeed": 40,
+      "firepower": 1,
+      "initMorale": 70,
+      "initSupply": 2,
+      "initStrength": 5
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "combatWills": [
+    {
+      "grade": "国军·精锐",
+      "shakenThresholdMorale": 40,
+      "routedCondition": "morale<=30 AND strength<=1 OR morale==0",
+      "moraleRecoveryPerHour": 2.5,
+      "replenishSpeedMod": 1.0
+    },
+    {
+      "grade": "国军·正规",
+      "shakenThresholdMorale": 45,
+      "routedCondition": "strength<=1 OR morale<=15",
+      "moraleRecoveryPerHour": 1.5,
+      "replenishSpeedMod": 0.8
+    },
+    {
+      "grade": "国军·杂牌",
+      "shakenThresholdMorale": 50,
+      "routedCondition": "strength<=2 OR morale<=25",
+      "moraleRecoveryPerHour": 0.5,
+      "replenishSpeedMod": 0.5
+    },
+    {
+      "grade": "日军",
+      "shakenThresholdMorale": 35,
+      "routedCondition": "morale<=20 AND strength<=1 OR morale==0",
+      "moraleRecoveryPerHour": 3.0,
+      "replenishSpeedMod": 1.2
+    },
+    {
+      "grade": "八路军·精锐",
+      "shakenThresholdMorale": 40,
+      "routedCondition": "strength<=1 OR morale<=10",
+      "moraleRecoveryPerHour": 2.0,
+      "replenishSpeedMod": 1.0
+    },
+    {
+      "grade": "八路军·普通",
+      "shakenThresholdMorale": 45,
+      "routedCondition": "strength<=1 OR morale<=20",
+      "moraleRecoveryPerHour": 1.5,
+      "replenishSpeedMod": 0.8
+    }
+  ]
+}

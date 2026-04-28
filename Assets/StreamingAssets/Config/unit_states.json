@@ -1,0 +1,64 @@
+{
+  "unitStates": [
+    {
+      "state": "Inspired",
+      "displayName": "高昂",
+      "attackMod": 2,
+      "defenseMod": 0,
+      "moveSpeedMod": 1.2,
+      "canAttack": true,
+      "canCommand": true,
+      "canReplenish": false
+    },
+    {
+      "state": "Normal",
+      "displayName": "正常",
+      "attackMod": 0,
+      "defenseMod": 0,
+      "moveSpeedMod": 1.0,
+      "canAttack": true,
+      "canCommand": true,
+      "canReplenish": false
+    },
+    {
+      "state": "Suppressed",
+      "displayName": "压制",
+      "attackMod": 0,
+      "defenseMod": 0,
+      "moveSpeedMod": 0.5,
+      "canAttack": false,
+      "canCommand": false,
+      "canReplenish": false
+    },
+    {
+      "state": "Shaken",
+      "displayName": "动摇",
+      "attackMod": -1,
+      "defenseMod": -1,
+      "moveSpeedMod": 0.8,
+      "canAttack": true,
+      "canCommand": false,
+      "canReplenish": false
+    },
+    {
+      "state": "Routed",
+      "displayName": "溃散",
+      "attackMod": 0,
+      "defenseMod": -2,
+      "moveSpeedMod": 0.7,
+      "canAttack": false,
+      "canCommand": false,
+      "canReplenish": false
+    },
+    {
+      "state": "Recuperating",
+      "displayName": "后撤整补",
+      "attackMod": 0,
+      "defenseMod": 0,
+      "moveSpeedMod": 1.0,
+      "canAttack": false,
+      "canCommand": true,
+      "canReplenish": true
+    }
+  ]
+}

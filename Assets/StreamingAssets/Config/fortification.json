@@ -1,0 +1,39 @@
+{
+  "fortificationLevels": [
+    {
+      "level": 0,
+      "name": "无工事",
+      "defenseBonus": 0,
+      "buildTimeDays": 0,
+      "suppressionHitsRequired": 1
+    },
+    {
+      "level": 1,
+      "name": "散兵坑",
+      "defenseBonus": 1,
+      "buildTimeDays": 1,
+      "suppressionHitsRequired": 1
+    },
+    {
+      "level": 2,
+      "name": "野战壕",
+      "defenseBonus": 2,
+      "buildTimeDays": 1,
+      "suppressionHitsRequired": 2
+    },
+    {
+      "level": 3,
+      "name": "加固阵地",
+      "defenseBonus": 3,
+      "buildTimeDays": 1,
+      "suppressionHitsRequired": 3
+    },
+    {
+      "level": 4,
+      "name": "永备工事",
+      "defenseBonus": 4,
+      "buildTimeDays": 1,
+      "suppressionHitsRequired": 4
+    }
+  ]
+}

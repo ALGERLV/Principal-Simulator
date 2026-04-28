@@ -1,0 +1,22 @@
+{
+  "weatherTypes": [
+    {
+      "type": "Sunny",
+      "displayName": "晴天",
+      "moveSpeedMod": 1.0,
+      "airSupportAvailable": true,
+      "artilleryAccuracyMod": 1.0,
+      "fortBuildSpeedMod": 1.0,
+      "moralePerDay": 0
+    },
+    {
+      "type": "Rainy",
+      "displayName": "下雨",
+      "moveSpeedMod": 0.5,
+      "airSupportAvailable": false,
+      "artilleryAccuracyMod": 0.7,
+      "fortBuildSpeedMod": 0.5,
+      "moralePerDay": -2
+    }
+  ]
+}

@@ -46,6 +46,14 @@ namespace TBS.Map.Components
             {
                 meshFilter.mesh = CreateHexagonMesh(1f, 0.2f);
             }
+
+            // 确保有碰撞器用于点击检测
+            var collider = GetComponent<Collider>();
+            if (collider == null)
+            {
+                var meshCollider = gameObject.AddComponent<MeshCollider>();
+                meshCollider.sharedMesh = meshFilter.sharedMesh;
+            }
         }
 
         private void Start()

@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a6282ba954eb0540b04c714f151ec8c, type: 3}
+  m_Name: Forest
+  m_EditorClassIdentifier: 
+  terrainId: forest
+  terrainName: "\u68EE\u6797"
+  description: "\u63D0\u4F9B\u9632\u5FA1\u52A0\u6210\uFF0C\u79FB\u52A8\u8F83\u6162"
+  movementCost: 1.5
+  isPassable: 1
+  defenseBonus: 0.1
+  attackBonus: 0
+  visibilityModifier: -0.3
+  terrainColor: {r: 0.10559088, g: 0.46226418, b: 0.019624414, a: 1}
+  terrainMaterial: {fileID: 0}
+  features: []
+  terrainProperties:
+    pairs: []

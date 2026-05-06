@@ -262,9 +262,676 @@ Assets/
 
 ---
 
-## 5. 通信机制
+## 5. 核心代码实现
 
-### 5.1 双向绑定实现
+### 5.1 ViewModel（数据层）
+
+#### IViewModel.cs - 接口定义
+
+```csharp
+using System;
+using System.ComponentModel;
+
+namespace TBS.Presentation.UI
+{
+    public interface IViewModel : INotifyPropertyChanged
+    {
+        void RaisePropertyChanged(string propertyName);
+        void RaisePropertiesChanged(params string[] propertyNames);
+        void Clear();
+    }
+}
+```
+
+#### ViewModelBase.cs - 基类实现
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace TBS.Presentation.UI
+{
+    public abstract class ViewModelBase : IViewModel
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        private readonly Dictionary<string, object> _propertyValues = new();
+
+        protected T GetProperty<T>([CallerMemberName] string propertyName = null, T defaultValue = default)
+        {
+            return _propertyValues.TryGetValue(propertyName, out var value) ? (T)value : defaultValue;
+        }
+
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value))
+                return false;
+
+            field = value;
+            RaisePropertyChanged(propertyName);
+            return true;
+        }
+
+        protected bool SetProperty<T>(T value, [CallerMemberName] string propertyName = null)
+        {
+            if (_propertyValues.TryGetValue(propertyName, out var existing) &&
+                EqualityComparer<T>.Default.Equals((T)existing, value))
+                return false;
+
+            _propertyValues[propertyName] = value;
+            RaisePropertyChanged(propertyName);
+            return true;
+        }
+
+        public void RaisePropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void RaisePropertiesChanged(params string[] propertyNames)
+        {
+            foreach (var name in propertyNames)
+                RaisePropertyChanged(name);
+        }
+
+        public virtual void Clear()
+        {
+            _propertyValues.Clear();
+        }
+
+        public void Subscribe(string propertyName, Action callback)
+        {
+            PropertyChanged += (sender, e) =>
+            {
+                if (e.PropertyName == propertyName)
+                    callback?.Invoke();
+            };
+        }
+    }
+}
+```
+
+---
+
+### 5.2 Presenter（调度层）
+
+#### IPresenter.cs - 接口定义
+
+```csharp
+namespace TBS.Presentation.UI
+{
+    public interface IPresenter
+    {
+        void OnShow();
+        void OnHide();
+        void OnDestroy();
+    }
+
+    public interface IPresenter<out TView, out TViewModel> : IPresenter
+        where TView : IUIView
+        where TViewModel : IViewModel
+    {
+        TView View { get; }
+        TViewModel ViewModel { get; }
+    }
+}
+```
+
+#### BasePresenter.cs - 基类实现
+
+```csharp
+namespace TBS.Presentation.UI
+{
+    public abstract class BasePresenter<TView, TViewModel> : IPresenter<TView, TViewModel>
+        where TView : IUIView
+        where TViewModel : IViewModel
+    {
+        public TView View { get; private set; }
+        public TViewModel ViewModel { get; private set; }
+
+        private bool _isInitialized;
+
+        public virtual void Initialize(TView view, TViewModel viewModel)
+        {
+            if (_isInitialized) return;
+            View = view;
+            ViewModel = viewModel;
+            _isInitialized = true;
+            OnInitialize();
+        }
+
+        protected abstract void OnInitialize();
+        public virtual void OnShow() { }
+        public virtual void OnHide() { }
+
+        public virtual void OnDestroy()
+        {
+            View = null;
+            ViewModel = null;
+            _isInitialized = false;
+        }
+    }
+}
+```
+
+---
+
+### 5.3 View（视图层）
+
+#### IUIView.cs - 接口定义
+
+```csharp
+using UnityEngine;
+
+namespace TBS.Presentation.UI
+{
+    public interface IUIView
+    {
+        string UIId { get; }
+        bool IsVisible { get; }
+        GameObject gameObject { get; }
+        Transform transform { get; }
+
+        void OnShow();
+        void OnHide();
+        void OnBeforeDestroy();
+    }
+}
+```
+
+#### BaseView.cs - 基类实现
+
+```csharp
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace TBS.Presentation.UI
+{
+    public abstract class BaseView<TViewModel> : MonoBehaviour, IUIView
+        where TViewModel : IViewModel, new()
+    {
+        [SerializeField] private string _uiId;
+
+        public string UIId => string.IsNullOrEmpty(_uiId) ? GetType().Name : _uiId;
+        public bool IsVisible => gameObject != null && gameObject.activeInHierarchy;
+        public TViewModel ViewModel { get; private set; }
+
+        protected IPresenter Presenter { get; private set; }
+        private readonly Dictionary<string, List<Action>> _bindings = new();
+        private bool _isInitialized;
+
+        protected virtual void Awake()
+        {
+            if (_isInitialized) return;
+
+            ViewModel = new TViewModel();
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+            Presenter = CreatePresenter();
+            Presenter?.Initialize(this, ViewModel);
+            _isInitialized = true;
+        }
+
+        protected virtual void Start()
+        {
+            OnBind();
+        }
+
+        protected virtual void OnDestroy()
+        {
+            OnBeforeDestroy();
+            Presenter?.OnDestroy();
+            Presenter = null;
+
+            if (ViewModel != null)
+                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+
+            _bindings.Clear();
+        }
+
+        protected abstract IPresenter CreatePresenter();
+        protected abstract void OnBind();
+
+        protected void Bind(string propertyName, Action callback)
+        {
+            if (!_bindings.TryGetValue(propertyName, out var list))
+            {
+                list = new List<Action>();
+                _bindings[propertyName] = list;
+            }
+            list.Add(callback);
+        }
+
+        private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (_bindings.TryGetValue(e.PropertyName, out var callbacks))
+            {
+                foreach (var callback in callbacks)
+                    callback?.Invoke();
+            }
+        }
+
+        public virtual void OnShow()
+        {
+            gameObject.SetActive(true);
+            Presenter?.OnShow();
+        }
+
+        public virtual void OnHide()
+        {
+            Presenter?.OnHide();
+            gameObject.SetActive(false);
+        }
+
+        public virtual void OnBeforeDestroy() { }
+    }
+}
+```
+
+---
+
+### 5.4 Command（命令层）
+
+#### ICommand.cs
+
+```csharp
+using System;
+
+namespace TBS.Presentation.UI
+{
+    public interface ICommand
+    {
+        bool CanExecute { get; }
+        void Execute();
+        event Action<bool> OnCanExecuteChanged;
+    }
+
+    public interface ICommand<T>
+    {
+        bool CanExecute(T parameter);
+        void Execute(T parameter);
+        event Action<bool> OnCanExecuteChanged;
+    }
+
+    public class RelayCommand : ICommand
+    {
+        private readonly Action _execute;
+        private readonly Func<bool> _canExecute;
+
+        public bool CanExecute => _canExecute?.Invoke() ?? true;
+        public event Action<bool> OnCanExecuteChanged;
+
+        public RelayCommand(Action execute, Func<bool> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        public void Execute()
+        {
+            if (CanExecute)
+                _execute.Invoke();
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            OnCanExecuteChanged?.Invoke(CanExecute);
+        }
+    }
+
+    public class RelayCommand<T> : ICommand<T>
+    {
+        private readonly Action<T> _execute;
+        private readonly Func<T, bool> _canExecute;
+
+        public event Action<bool> OnCanExecuteChanged;
+
+        public RelayCommand(Action<T> execute, Func<T, bool> canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        public bool CanExecute(T parameter) => _canExecute?.Invoke(parameter) ?? true;
+
+        public void Execute(T parameter)
+        {
+            if (CanExecute(parameter))
+                _execute.Invoke(parameter);
+        }
+
+        public void RaiseCanExecuteChanged() => OnCanExecuteChanged?.Invoke(true);
+    }
+}
+```
+
+---
+
+### 5.5 UIManager（管理器）
+
+#### UIManager.cs
+
+```csharp
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+using Object = UnityEngine.Object;
+
+namespace TBS.Presentation.UI
+{
+    public class UIManager : MonoBehaviour
+    {
+        private static UIManager _instance;
+        public static UIManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    CreateInstance();
+                return _instance;
+            }
+        }
+
+        private static void CreateInstance()
+        {
+            var go = new GameObject("UIManager");
+            _instance = go.AddComponent<UIManager>();
+            DontDestroyOnLoad(go);
+        }
+
+        [SerializeField] private Transform _uiRoot;
+        [SerializeField] private int _baseSortingOrder = 100;
+        [SerializeField] private int _sortingOrderStep = 10;
+
+        private readonly Dictionary<string, IUIView> _uiInstances = new();
+        private readonly Dictionary<string, UIConfig> _uiConfigs = new();
+        private readonly List<IUIView> _visibleUIStack = new();
+
+        public Transform UIRoot
+        {
+            get
+            {
+                if (_uiRoot == null)
+                    _uiRoot = transform;
+                return _uiRoot;
+            }
+        }
+
+        private void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
+            if (_uiRoot == null) _uiRoot = transform;
+        }
+
+        #region 配置管理
+
+        public void RegisterConfig(UIConfig config)
+        {
+            if (config == null || string.IsNullOrEmpty(config.UIId)) return;
+            _uiConfigs[config.UIId] = config;
+        }
+
+        public void RegisterConfigs(params UIConfig[] configs)
+        {
+            foreach (var config in configs)
+                RegisterConfig(config);
+        }
+
+        public UIConfig GetConfig(string uiId)
+        {
+            _uiConfigs.TryGetValue(uiId, out var config);
+            return config;
+        }
+
+        #endregion
+
+        #region 创建/显示/隐藏/销毁
+
+        public void Create<T>(Action<T> onReady = null) where T : MonoBehaviour, IUIView
+        {
+            var uiId = typeof(T).Name;
+            Create(uiId, view => onReady?.Invoke(view as T));
+        }
+
+        public void Create(string uiId, Action<IUIView> onReady = null)
+        {
+            if (_uiInstances.TryGetValue(uiId, out var existingUI))
+            {
+                onReady?.Invoke(existingUI);
+                return;
+            }
+
+            var config = GetConfig(uiId);
+            if (config?.Prefab == null)
+            {
+                Debug.LogError($"[UIManager] UI配置或Prefab为空: {uiId}");
+                return;
+            }
+
+            var parent = config.Parent ?? UIRoot;
+            var go = Instantiate(config.Prefab, parent);
+            go.name = uiId;
+
+            var view = go.GetComponent<IUIView>();
+            if (view == null)
+            {
+                Debug.LogError($"[UIManager] Prefab根节点缺少IUIView组件: {uiId}");
+                Destroy(go);
+                return;
+            }
+
+            _uiInstances[uiId] = view;
+            go.SetActive(false);
+            onReady?.Invoke(view);
+        }
+
+        public void Show<T>() where T : MonoBehaviour, IUIView
+        {
+            Show(typeof(T).Name);
+        }
+
+        public void Show(string uiId)
+        {
+            if (!_uiInstances.TryGetValue(uiId, out var view))
+            {
+                Create(uiId, v => ShowInternal(v, uiId));
+                return;
+            }
+            ShowInternal(view, uiId);
+        }
+
+        private void ShowInternal(IUIView view, string uiId)
+        {
+            if (view == null) return;
+
+            var config = GetConfig(uiId);
+            if (config?.IsModal == true)
+                SetModalBlocking(true);
+
+            SetSortingOrder(view);
+            view.OnShow();
+
+            if (!_visibleUIStack.Contains(view))
+                _visibleUIStack.Add(view);
+        }
+
+        public void Hide<T>() where T : MonoBehaviour, IUIView
+        {
+            Hide(typeof(T).Name);
+        }
+
+        public void Hide(string uiId)
+        {
+            if (!_uiInstances.TryGetValue(uiId, out var view)) return;
+
+            var config = GetConfig(uiId);
+            view.OnHide();
+            _visibleUIStack.Remove(view);
+
+            if (config?.IsModal == true)
+                UpdateModalBlocking();
+
+            if (config?.CacheOnHide == false)
+                Destroy(uiId);
+        }
+
+        public void Toggle<T>() where T : MonoBehaviour, IUIView
+        {
+            var uiId = typeof(T).Name;
+            if (_uiInstances.TryGetValue(uiId, out var view) && view.IsVisible)
+                Hide(uiId);
+            else
+                Show(uiId);
+        }
+
+        public void Destroy<T>() where T : MonoBehaviour, IUIView
+        {
+            Destroy(typeof(T).Name);
+        }
+
+        public void Destroy(string uiId)
+        {
+            if (!_uiInstances.TryGetValue(uiId, out var view)) return;
+
+            if (view.IsVisible)
+            {
+                view.OnHide();
+                _visibleUIStack.Remove(view);
+            }
+
+            view.OnBeforeDestroy();
+            if (view.gameObject != null)
+                Object.Destroy(view.gameObject);
+
+            _uiInstances.Remove(uiId);
+            UpdateModalBlocking();
+        }
+
+        public void DestroyAll()
+        {
+            foreach (var uiId in new List<string>(_uiInstances.Keys))
+                Destroy(uiId);
+            _uiInstances.Clear();
+            _visibleUIStack.Clear();
+        }
+
+        #endregion
+
+        #region 获取/查询
+
+        public T Get<T>() where T : MonoBehaviour, IUIView
+        {
+            return Get(typeof(T).Name) as T;
+        }
+
+        public IUIView Get(string uiId)
+        {
+            _uiInstances.TryGetValue(uiId, out var view);
+            return view;
+        }
+
+        public bool IsCreated<T>() where T : MonoBehaviour, IUIView
+        {
+            return _uiInstances.ContainsKey(typeof(T).Name);
+        }
+
+        public bool IsVisible<T>() where T : MonoBehaviour, IUIView
+        {
+            return _uiInstances.TryGetValue(typeof(T).Name, out var view) && view.IsVisible;
+        }
+
+        #endregion
+
+        #region 层级管理
+
+        private void SetSortingOrder(IUIView view)
+        {
+            if (view == null) return;
+
+            var order = _baseSortingOrder + _visibleUIStack.Count * _sortingOrderStep;
+            var canvas = view.gameObject.GetComponent<Canvas>();
+            if (canvas == null) canvas = view.gameObject.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = order;
+
+            if (view.gameObject.GetComponent<GraphicRaycaster>() == null)
+                view.gameObject.AddComponent<GraphicRaycaster>();
+        }
+
+        #endregion
+
+        #region 模态管理
+
+        private GameObject _modalBlocker;
+
+        private void SetModalBlocking(bool enable)
+        {
+            if (enable)
+            {
+                if (_modalBlocker == null)
+                {
+                    _modalBlocker = new GameObject("ModalBlocker");
+                    _modalBlocker.transform.SetParent(UIRoot, false);
+                    var rect = _modalBlocker.AddComponent<RectTransform>();
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = Vector2.one;
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+                    var image = _modalBlocker.AddComponent<Image>();
+                    image.color = new Color(0, 0, 0, 0);
+                }
+                _modalBlocker.SetActive(true);
+            }
+            else if (_modalBlocker != null)
+            {
+                _modalBlocker.SetActive(false);
+            }
+        }
+
+        private void UpdateModalBlocking()
+        {
+            bool hasModalVisible = false;
+            foreach (var ui in _visibleUIStack)
+            {
+                var config = GetConfig(ui.UIId);
+                if (config?.IsModal == true)
+                {
+                    hasModalVisible = true;
+                    break;
+                }
+            }
+            SetModalBlocking(hasModalVisible);
+        }
+
+        #endregion
+    }
+
+    [Serializable]
+    public class UIConfig
+    {
+        public string UIId;
+        public GameObject Prefab;
+        public Transform Parent;
+        public bool CacheOnHide = true;
+        public bool IsModal = false;
+        public int CustomSortingOrder = -1;
+    }
+}
+```
+
+---
+
+## 6. 通信机制
+
+### 6.1 双向绑定实现
 
 ```
 ┌─────────────┐      PropertyChanged       ┌─────────────┐
@@ -281,7 +948,7 @@ Assets/
                 └──────────────┘
 ```
 
-### 5.2 具体通信流程
+### 6.2 具体通信流程
 
 | 场景 | 流程 |
 |------|------|
@@ -291,7 +958,7 @@ Assets/
 
 ---
 
-## 6. 扩展建议
+## 7. 扩展建议
 
 | 功能 | 建议 |
 |------|------|
@@ -303,7 +970,7 @@ Assets/
 
 ---
 
-## 7. 设计总结
+## 8. 设计总结
 
 | 组件 | 职责 | 是否可复用 | 依赖 |
 |------|------|----------|------|

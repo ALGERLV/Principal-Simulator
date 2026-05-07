@@ -148,5 +148,13 @@ namespace TBS.Presentation.UI
             canvas.overrideSorting = true;
             canvas.sortingOrder = order;
         }
+
+        /// <summary>
+        /// 设置UIId（通常用于编辑器生成Prefab时调用）
+        /// </summary>
+        public void SetUIId(string uiId)
+        {
+            _uiId = uiId;
+        }
     }
 }

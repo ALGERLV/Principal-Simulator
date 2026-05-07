@@ -2,6 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using TBS.Map.Tools;
 using TBS.Map.Components;
+using TBS.Core.Events;
+using TBS.Contracts.Events;
 
 namespace TBS.UnitSystem
 {
@@ -45,33 +47,30 @@ namespace TBS.UnitSystem
                 unitLayer = LayerMask.GetMask("Unit");
             if (tileLayer == 0)
                 tileLayer = LayerMask.GetMask("Tile");
+
+            // 订阅输入事件
+            EventBus.On<MouseButtonDownEvent>(OnMouseButtonDown);
         }
 
         void Update()
         {
-            HandleInput();
+            // Update 中不再处理输入，全部通过 EventBus 事件处理
         }
 
-        /// <summary>
-        /// 处理输入
-        /// </summary>
-        void HandleInput()
+        private void OnMouseButtonDown(MouseButtonDownEvent evt)
         {
-            // 鼠标左键点击
-            if (Input.GetMouseButtonDown(0))
+            // 处理鼠标点击输入
+            if (evt.Button == 0)
             {
-                Ray ray = gameCamera.ScreenPointToRay(Input.mousePosition);
+                Ray ray = gameCamera.ScreenPointToRay(evt.ScreenPos);
                 RaycastHit hit;
 
-                // 调试：显示射线
                 Debug.DrawRay(ray.origin, ray.direction * raycastDistance, Color.red, 1f);
 
-                // 首先检测是否点击了单位（使用所有层，然后通过组件筛选）
                 if (Physics.Raycast(ray, out hit, raycastDistance))
                 {
                     Debug.Log($"点击检测：{hit.collider.name}, Layer: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
-                    
-                    // 检查是否点击了单位
+
                     var unit = hit.collider.GetComponentInParent<UnitToken>();
                     if (unit != null)
                     {
@@ -80,10 +79,8 @@ namespace TBS.UnitSystem
                         return;
                     }
 
-                    // 如果没有选中单位，检查是否点击了地块或高亮
                     if (selectedUnit != null)
                     {
-                        // 首先检查是否点击了移动高亮
                         var moveHighlight = hit.collider.GetComponent<MoveHighlight>();
                         if (moveHighlight != null)
                         {
@@ -92,7 +89,6 @@ namespace TBS.UnitSystem
                             return;
                         }
 
-                        // 检查是否点击了地块
                         var tile = hit.collider.GetComponent<HexTile>();
                         if (tile != null)
                         {
@@ -101,7 +97,6 @@ namespace TBS.UnitSystem
                             return;
                         }
 
-                        // 点击了空白处，取消选择
                         Debug.Log("点击空白处，取消选择");
                         DeselectCurrentUnit();
                     }
@@ -115,10 +110,9 @@ namespace TBS.UnitSystem
                     }
                 }
             }
-
-            // 右键取消选择
-            if (Input.GetMouseButtonDown(1))
+            else if (evt.Button == 1)
             {
+                // 右键取消选择
                 DeselectCurrentUnit();
             }
         }
@@ -287,6 +281,8 @@ namespace TBS.UnitSystem
 
         void OnDestroy()
         {
+            // 取消输入事件订阅
+            EventBus.Off<MouseButtonDownEvent>(OnMouseButtonDown);
             ClearHighlights();
         }
 

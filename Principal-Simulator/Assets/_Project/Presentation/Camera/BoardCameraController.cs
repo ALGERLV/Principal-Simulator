@@ -2,6 +2,8 @@ using System;
 using TBS.Map.Components;
 using TBS.Map.Tools;
 using UnityEngine;
+using TBS.Core.Events;
+using TBS.Contracts.Events;
 
 namespace TBS.Presentation.Camera
 {
@@ -115,6 +117,13 @@ namespace TBS.Presentation.Camera
                     Debug.LogWarning("BoardCameraController: 当前物体没有Camera组件，将使用主相机", this);
                 }
             }
+
+            // 订阅输入事件
+            EventBus.On<MouseButtonDownEvent>(OnMouseButtonDown);
+            EventBus.On<MouseButtonUpEvent>(OnMouseButtonUp);
+            EventBus.On<MouseDragEvent>(OnMouseDrag);
+            EventBus.On<ScrollEvent>(OnScroll);
+            EventBus.On<KeyHeldEvent>(OnKeyHeld);
         }
 
         private void Start()
@@ -126,12 +135,7 @@ namespace TBS.Presentation.Camera
         {
             if (!isInitialized) return;
 
-            HandleMouseInput();
-            HandleKeyboardInput();
             HandleEdgeScrolling();
-            HandleZoomInput();
-            HandleRotationInput();
-
             UpdateCameraPosition();
         }
 
@@ -209,39 +213,37 @@ namespace TBS.Presentation.Camera
 
         #endregion
 
-        #region Input Handling
+        #region Input Event Handlers
 
-        private void HandleMouseInput()
+        private void OnMouseButtonDown(MouseButtonDownEvent evt)
         {
-            // 左键拖拽 - 平移移动
-            if (Input.GetMouseButtonDown(0))
+            if (evt.IsOverUI) return;
+
+            if (evt.Button == 0)
             {
                 isLeftDragging = true;
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = evt.ScreenPos;
             }
-            else if (Input.GetMouseButtonUp(0))
-            {
-                isLeftDragging = false;
-            }
-
-            // 右键拖拽 - 调整俯仰角和旋转
-            if (Input.GetMouseButtonDown(1))
+            else if (evt.Button == 1)
             {
                 isRightDragging = true;
-                lastMousePosition = Input.mousePosition;
+                lastMousePosition = evt.ScreenPos;
             }
-            else if (Input.GetMouseButtonUp(1))
-            {
+        }
+
+        private void OnMouseButtonUp(MouseButtonUpEvent evt)
+        {
+            if (evt.Button == 0)
+                isLeftDragging = false;
+            else if (evt.Button == 1)
                 isRightDragging = false;
-            }
+        }
 
-            // 处理左键拖拽移动
-            if (isLeftDragging)
+        private void OnMouseDrag(MouseDragEvent evt)
+        {
+            if (evt.Button == 0 && isLeftDragging)
             {
-                Vector3 delta = Input.mousePosition - lastMousePosition;
-                lastMousePosition = Input.mousePosition;
-
-                // 将屏幕移动转换为世界空间移动（与相机朝向相关）
+                Vector3 delta = evt.Delta;
                 Vector3 right = transform.right;
                 Vector3 forward = Vector3.Cross(right, Vector3.up);
 
@@ -250,44 +252,45 @@ namespace TBS.Presentation.Camera
 
                 OnCameraMoved?.Invoke();
             }
-
-            // 处理右键拖拽旋转
-            if (isRightDragging)
+            else if (evt.Button == 1 && isRightDragging)
             {
-                Vector3 delta = Input.mousePosition - lastMousePosition;
-                lastMousePosition = Input.mousePosition;
+                Vector3 delta = evt.Delta;
 
-                // 水平移动调整 Yaw（水平旋转）
                 currentYaw += delta.x * rotationSpeed * 0.05f * Time.deltaTime;
-
-                // 垂直移动调整 Pitch（俯仰角）
-                // 向上滑动减小角度，向下滑动增大角度
                 currentPitch += delta.y * rotationSpeed * 0.05f * Time.deltaTime;
-
-                // 限制俯仰角范围
                 currentPitch = Mathf.Clamp(currentPitch, minPitchAngle, maxPitchAngle);
 
                 OnRotationChanged?.Invoke();
             }
         }
 
-        private void HandleKeyboardInput()
+        private void OnScroll(ScrollEvent evt)
         {
-            // WASD 或方向键移动
+            float scroll = evt.Delta;
+            float newHeight = currentZoomLevel - scroll * zoomSpeed;
+            currentZoomLevel = Mathf.Clamp(newHeight, minZoomDistance, maxZoomDistance);
+
+            OnZoomChanged?.Invoke(ZoomLevel);
+        }
+
+        private void OnKeyHeld(KeyHeldEvent evt)
+        {
             Vector3 moveDirection = Vector3.zero;
 
-            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-                moveDirection += Vector3.forward;
-            if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-                moveDirection += Vector3.back;
-            if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-                moveDirection += Vector3.left;
-            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-                moveDirection += Vector3.right;
+            // WASD 移动
+            if (evt.Key == KeyCode.W) moveDirection += Vector3.forward;
+            if (evt.Key == KeyCode.S) moveDirection += Vector3.back;
+            if (evt.Key == KeyCode.A) moveDirection += Vector3.left;
+            if (evt.Key == KeyCode.D) moveDirection += Vector3.right;
+
+            // 方向键移动
+            if (evt.Key == KeyCode.UpArrow) moveDirection += Vector3.forward;
+            if (evt.Key == KeyCode.DownArrow) moveDirection += Vector3.back;
+            if (evt.Key == KeyCode.LeftArrow) moveDirection += Vector3.left;
+            if (evt.Key == KeyCode.RightArrow) moveDirection += Vector3.right;
 
             if (moveDirection != Vector3.zero)
             {
-                // 将移动方向转换为与相机朝向一致
                 Vector3 right = transform.right;
                 Vector3 forward = Vector3.Cross(right, Vector3.up);
 
@@ -296,7 +299,23 @@ namespace TBS.Presentation.Camera
 
                 OnCameraMoved?.Invoke();
             }
+
+            // Q/E 旋转
+            if (evt.Key == KeyCode.Q)
+            {
+                currentYaw -= rotationSpeed * Time.deltaTime;
+                OnRotationChanged?.Invoke();
+            }
+            else if (evt.Key == KeyCode.E)
+            {
+                currentYaw += rotationSpeed * Time.deltaTime;
+                OnRotationChanged?.Invoke();
+            }
         }
+
+        #endregion
+
+        #region Edge Scrolling
 
         private void HandleEdgeScrolling()
         {
@@ -327,39 +346,6 @@ namespace TBS.Presentation.Camera
 
                 OnCameraMoved?.Invoke();
             }
-        }
-
-        private void HandleZoomInput()
-        {
-            // 滚轮缩放
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            if (Mathf.Abs(scroll) > 0.001f)
-            {
-                // 修改目标高度
-                float currentHeight = currentZoomLevel;
-                float newHeight = currentHeight - scroll * zoomSpeed;
-                currentZoomLevel = Mathf.Clamp(newHeight, minZoomDistance, maxZoomDistance);
-
-                OnZoomChanged?.Invoke(ZoomLevel);
-            }
-        }
-
-        private void HandleRotationInput()
-        {
-            // Q/E 键旋转
-            if (Input.GetKey(KeyCode.Q))
-            {
-                currentYaw -= rotationSpeed * Time.deltaTime;
-                OnRotationChanged?.Invoke();
-            }
-            else if (Input.GetKey(KeyCode.E))
-            {
-                currentYaw += rotationSpeed * Time.deltaTime;
-                OnRotationChanged?.Invoke();
-            }
-
-            // 限制俯仰角
-            currentPitch = Mathf.Clamp(currentPitch, minPitchAngle, maxPitchAngle);
         }
 
         #endregion
@@ -542,6 +528,16 @@ namespace TBS.Presentation.Camera
         }
 
         #endregion
+
+        private void OnDestroy()
+        {
+            // 取消输入事件订阅
+            EventBus.Off<MouseButtonDownEvent>(OnMouseButtonDown);
+            EventBus.Off<MouseButtonUpEvent>(OnMouseButtonUp);
+            EventBus.Off<MouseDragEvent>(OnMouseDrag);
+            EventBus.Off<ScrollEvent>(OnScroll);
+            EventBus.Off<KeyHeldEvent>(OnKeyHeld);
+        }
 
         #region Gizmos
 

@@ -265,8 +265,11 @@ namespace TBS.Map.Components
                 return null;
             }
 
-            // 实例化地块
-            var tileObject = Instantiate(tilePrefab, tileParent ?? transform);
+            // 获取或创建TerrainRoot
+            Transform terrainRoot = GetOrCreateTerrainRoot();
+
+            // 实例化地块到TerrainRoot下
+            var tileObject = Instantiate(tilePrefab, terrainRoot);
             var tile = tileObject.GetComponent<HexTile>();
 
             if (tile == null)
@@ -607,6 +610,20 @@ namespace TBS.Map.Components
         #endregion
 
         #region Private Methods
+
+        private Transform GetOrCreateTerrainRoot()
+        {
+            Transform root = transform.Find("TerrainRoot");
+            if (root == null)
+            {
+                var rootObj = new GameObject("TerrainRoot");
+                rootObj.transform.SetParent(transform);
+                rootObj.transform.localPosition = Vector3.zero;
+                rootObj.transform.localRotation = Quaternion.identity;
+                root = rootObj.transform;
+            }
+            return root;
+        }
 
         private void CalculateBounds()
         {

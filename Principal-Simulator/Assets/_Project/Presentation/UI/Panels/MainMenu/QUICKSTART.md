@@ -1,34 +1,25 @@
 # MainMenu UI 快速开始指南
 
-## 快速设置（4步完成）
+## 快速设置（3步完成）
 
 ### Step 1: 生成Prefab（在Unity编辑器中）
 ```
 菜单 → Tools → 生成UI预制体 → 生成MainMenu
 ```
-脚本会自动生成完整的UI界面并保存到 `Assets/Prefabs/UI/MainMenu/MainMenu.prefab`
+脚本会自动生成完整的UI界面并直接保存到 `Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab`
 
-### Step 2: 将Prefab移到Resources文件夹（重要！）
+**注意**：Prefab现在直接生成到Resources文件夹中，无需手动移动！
 
-因为UIManager通过Resources.Load加载Prefab，需要将生成的Prefab移到Resources文件夹：
-
-1. 创建文件夹：`Assets/Resources/Prefabs/UI/MainMenu/`
-2. 将 `Assets/Prefabs/UI/MainMenu/MainMenu.prefab` 复制或移动到 `Assets/Resources/Prefabs/UI/MainMenu/`
-
-**注意**：`Assets/Prefabs/` 和 `Assets/Resources/Prefabs/` 是不同的：
-- `Assets/Prefabs/` - 普通预制体目录
-- `Assets/Resources/Prefabs/` - Resources目录中的预制体，才能被Resources.Load加载
-
-### Step 3: 配置场景
+### Step 2: 配置场景
 
 1. 在游戏启动场景中创建空GameObject，命名为 `UIInitializer`
 2. 添加 `Assets/_Project/Presentation/UIInitializer.cs` 脚本到该GameObject
 3. 该脚本会自动：
    - 初始化UIManager
    - 注册所有UI配置
-   - 在Start时显示MainMenu
+   - 加载MainMenu预制体
 
-### Step 4: 运行游戏
+### Step 3: 运行游戏
 
 启动游戏时，UIInitializer会自动通过UIManager加载并显示MainMenu界面。
 
@@ -59,7 +50,7 @@ UIInitializer.Awake() - 初始化UIManager和配置
   ↓
 UIInitializer.Start() - 调用UIManager.Show<MainMenuView>()
   ↓
-UIManager创建Prefab实例
+UIManager从Resources加载Prefab
   ↓
 MainMenuView初始化 - 创建Presenter和ViewModel
   ↓
@@ -109,11 +100,8 @@ bool visible = UIManager.Instance.IsVisible<MainMenuView>();
 
 ```
 Assets/
-├── Prefabs/UI/MainMenu/
-│   └── MainMenu.prefab             # Prefab源文件（生成位置）
-│
 ├── Resources/Prefabs/UI/MainMenu/
-│   └── MainMenu.prefab             # UIManager加载的文件（需手动复制）
+│   └── MainMenu.prefab             # UIManager加载的文件
 │
 └── _Project/Presentation/
     ├── UI/
@@ -128,22 +116,25 @@ Assets/
 
 ## 常见问题
 
-### Q: 为什么需要将Prefab放在Resources文件夹中？
-A: UIManager使用`Resources.Load()`加载Prefab，这要求Prefab必须在`Assets/Resources/`目录下。
+### Q: 为什么需要生成Prefab？
+A: Prefab包含完整的UI结构（Canvas、按钮、文本等），并将其与MainMenuView脚本绑定，这样UIManager才能正确加载和管理它。
 
 ### Q: 如何修改按钮的样式？
-A: 在生成Prefab后，可以直接在Unity编辑器中打开Prefab编辑模式，修改按钮的Image、Text等组件。修改会自动保存。
+A: 生成Prefab后，直接在Unity编辑器中打开Prefab编辑模式，修改按钮的Image、Text等组件。修改会自动保存。
 
 ### Q: 按钮点击没有反应？
 A: 检查以下几点：
 1. UIInitializer脚本是否在场景中
-2. Prefab是否正确放在 `Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab`
-3. 查看Console是否有错误日志
+2. Prefab是否正确生成到 `Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab`
+3. Console中是否有错误日志
 
 ### Q: 如何自定义按钮行为？
 A: 修改MainMenuPresenter中的`OnStartClicked()`和`OnExitClicked()`方法，添加你的游戏逻辑。
 
 ---
 
-现在你可以在Unity编辑器中运行Prefab生成脚本，然后启动游戏看到完整的开始菜单界面！
+现在你可以在Unity编辑器中运行Prefab生成脚本，启动游戏看到完整的开始菜单界面！
+
+更多技术细节和经验教训，请查看 [UI_Generation_Experience.md](UI_Generation_Experience.md)
+
 

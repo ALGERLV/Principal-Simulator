@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TBS.Core;
 using TBS.Presentation.UI;
 
 namespace TBS.Presentation.UI.Panels.BattleHUD
@@ -8,9 +9,10 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
     {
         [SerializeField] private Text _titleText;
         [SerializeField] private Text _dayText;
+        [SerializeField] private Text _timeText;
         [SerializeField] private Button _menuButton;
-
         private BattleHUDPresenter _presenter;
+        private GameTimeSystem _gameTimeSystem;
 
         protected override IPresenter CreatePresenter()
         {
@@ -21,6 +23,9 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
         protected override void OnBind()
         {
             Debug.Log("[BattleHUDView] OnBind - 开始绑定UI");
+
+            // 获取时间系统
+            _gameTimeSystem = GameTimeSystem.Instance;
 
             // 自动查找子物体
             if (_titleText == null)
@@ -33,6 +38,12 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
             {
                 _dayText = transform.Find("TopBar/DayText")?.GetComponent<Text>();
                 Debug.Log($"[BattleHUDView] 自动查找 DayText: {(_dayText != null ? "成功" : "失败")}");
+            }
+
+            if (_timeText == null)
+            {
+                _timeText = transform.Find("TopBar/TimeText")?.GetComponent<Text>();
+                Debug.Log($"[BattleHUDView] 自动查找 TimeText: {(_timeText != null ? "成功" : "失败")}");
             }
 
             if (_menuButton == null)
@@ -65,6 +76,18 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
                 Debug.Log("[BattleHUDView] DayText 绑定成功");
             }
 
+            // 绑定时间
+            if (_timeText != null)
+            {
+                _timeText.text = ViewModel.TimeText;
+                Bind(nameof(ViewModel.TimeText), () =>
+                {
+                    if (_timeText != null)
+                        _timeText.text = ViewModel.TimeText;
+                });
+                Debug.Log("[BattleHUDView] TimeText 绑定成功");
+            }
+
             // 绑定菜单按钮
             if (_menuButton != null)
             {
@@ -95,6 +118,14 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
             Debug.Log("[BattleHUDView] OnBind - 绑定完成");
         }
 
+        void Update()
+        {
+            if (_gameTimeSystem != null && IsVisible)
+            {
+                ViewModel.UpdateTime(_gameTimeSystem.GameHours);
+            }
+        }
+
         public override void OnBeforeDestroy()
         {
             if (_menuButton != null)
@@ -104,10 +135,11 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
         /// <summary>
         /// 供编辑器生成脚本调用，关联所有UI元素
         /// </summary>
-        public void SetUIElements(Text titleText, Text dayText, Button menuButton)
+        public void SetUIElements(Text titleText, Text dayText, Text timeText, Button menuButton)
         {
             _titleText = titleText;
             _dayText = dayText;
+            _timeText = timeText;
             _menuButton = menuButton;
         }
     }

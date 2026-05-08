@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TBS.Map.Tools;
 using TBS.Map.Components;
 
@@ -163,32 +162,6 @@ namespace TBS.UnitSystem
             sym.transform.localScale    = new Vector3(0.25f, 0.05f, 0.25f);
             DestroyImmediate(sym.GetComponent<SphereCollider>());
             token.SymbolRenderer = sym.GetComponent<MeshRenderer>();
-
-            var canvasObj = new GameObject("TokenCanvas");
-            canvasObj.transform.SetParent(root.transform);
-            canvasObj.transform.localPosition = new Vector3(0, 1.5f, 0);
-            canvasObj.transform.localRotation = Quaternion.Euler(30, 0, 0);
-            var canvas = canvasObj.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvasObj.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 1.5f);
-
-            token.Text_UnitName = MakeText("Text_UnitName", canvasObj.transform, new Vector3(0, 1.6f, 0),     16, FontStyle.Bold).GetComponent<Text>();
-            token.Text_ATK      = MakeText("Text_ATK",      canvasObj.transform, new Vector3(-0.6f, 1.4f, 0), 14, FontStyle.Normal).GetComponent<Text>();
-            token.Text_DEF      = MakeText("Text_DEF",      canvasObj.transform, new Vector3(0.1f, 1.4f, 0),  14, FontStyle.Normal).GetComponent<Text>();
-            token.Text_State    = MakeText("Text_State",    canvasObj.transform, new Vector3(0, 1.0f, 0),     12, FontStyle.Normal).GetComponent<Text>();
-
-            var bars = new Transform[5];
-            for (int i = 0; i < 5; i++)
-            {
-                var bar = GameObject.CreatePrimitive(PrimitiveType.Quad);
-                bar.name = $"Str_0{i + 1}";
-                bar.transform.SetParent(canvasObj.transform);
-                bar.transform.localPosition = new Vector3(-0.6f + i * 0.2f, 1.2f, 0);
-                bar.transform.localScale    = new Vector3(0.15f, 0.15f, 0.15f);
-                DestroyImmediate(bar.GetComponent<Collider>());
-                bars[i] = bar.transform;
-            }
-            token.StrengthBars = bars;
         }
 
         static GameObject MakeCylinder(string name, Transform parent, Vector3 lPos, Vector3 lScale)
@@ -202,18 +175,6 @@ namespace TBS.UnitSystem
             return go;
         }
 
-        static GameObject MakeText(string name, Transform parent, Vector3 lPos, int size, FontStyle style)
-        {
-            var obj = new GameObject(name);
-            obj.transform.SetParent(parent);
-            obj.transform.localPosition = lPos;
-            var t = obj.AddComponent<Text>();
-            t.fontSize = size; t.fontStyle = style;
-            t.color = Color.white; t.alignment = TextAnchor.MiddleCenter;
-            t.font  = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            obj.GetComponent<RectTransform>().sizeDelta = new Vector2(2, 0.3f);
-            return obj;
-        }
 
         HexTile FindFirstAvailableTile(HexGrid hexGrid)
         {

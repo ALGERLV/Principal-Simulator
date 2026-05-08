@@ -4,7 +4,7 @@ namespace TBS.Core
 {
     /// <summary>
     /// 游戏时间系统 — 将真实秒数映射为游戏小时
-    /// 一格约等于10公里，正规步兵一天行军速度约25km/day = 2.5格/天
+    /// 一格约等于2公里，正规步兵一天行军速度约25km/day = 12.5格/天
     /// realSecondsPerGameDay 控制时间流速
     /// </summary>
     public class GameTimeSystem : MonoBehaviour
@@ -16,7 +16,7 @@ namespace TBS.Core
         [SerializeField] private float realSecondsPerGameDay = 60f;
 
         [Tooltip("每格地图代表的公里数")]
-        [SerializeField] private float kmPerHexTile = 10f;
+        [SerializeField] private float kmPerHexTile = 2f;
 
         // 当前游戏时间（以小时计）
         private float gameHours;

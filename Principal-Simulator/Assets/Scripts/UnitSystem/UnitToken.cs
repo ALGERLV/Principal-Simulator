@@ -1,6 +1,5 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
 using TBS.Map.Tools;
 using TBS.Map.Components;
 using TBS.Map.API;
@@ -17,11 +16,6 @@ namespace TBS.UnitSystem
         public HexCoord CurrentCoord => currentCoord;
 
         [Header("UI 引用（可选）")]
-        public Text Text_ATK;
-        public Text Text_DEF;
-        public Text Text_UnitName;
-        public Text Text_State;
-        public Transform[] StrengthBars;
         public Renderer BorderRenderer;
         public Renderer BaseRenderer;
         public Renderer SymbolRenderer;
@@ -83,7 +77,6 @@ namespace TBS.UnitSystem
             currentCoord = coord;
             SnapToCoord(coord);
             hexGrid?.GetTile(coord)?.SetOccupyingUnit(this);
-            UpdateVisuals();
         }
 
         // ─── 移动 ─────────────────────────────────────────────────
@@ -105,15 +98,23 @@ namespace TBS.UnitSystem
         {
             isMoving = true;
 
+            // 打印移动开始时的游戏时间
+            float startGameHours = GameTimeSystem.Instance != null
+                ? GameTimeSystem.Instance.GameHours
+                : 0f;
+            Debug.Log($"[UnitToken] {UnitName} 开始移动到 {targetCoord}，游戏时间: {startGameHours:F1}小时");
+
             Vector3 startPos = transform.position;
             Vector3 endPos   = hexGrid.CoordToWorldPosition(targetCoord);
             endPos.y = startPos.y;
 
             float speed    = UnitLogic != null ? UnitLogic.EffectiveMoveSpeed : 25f;
+            Debug.Log($"[UnitToken] {UnitName} 移动速度(EffectiveMoveSpeed): {speed}km/day");
+
             float duration = GameTimeSystem.Instance != null
                 ? GameTimeSystem.Instance.GetRealSecondsPerHex(speed)
                 : 1f;
-            duration = Mathf.Clamp(duration, 0.2f, 5f);
+            Debug.Log($"[UnitToken] {UnitName} GetRealSecondsPerHex返回: {duration}秒");
 
             float elapsed = 0f;
             while (elapsed < duration)
@@ -127,6 +128,12 @@ namespace TBS.UnitSystem
             transform.position = endPos;
             currentCoord = targetCoord;
             UnitLogic?.SetPosition(targetCoord);
+
+            // 打印移动完成时的游戏时间
+            float endGameHours = GameTimeSystem.Instance != null
+                ? GameTimeSystem.Instance.GameHours
+                : 0f;
+            Debug.Log($"[UnitToken] {UnitName} 移动完成，游戏时间: {endGameHours:F1}小时，耗时: {endGameHours - startGameHours:F1}小时");
 
             isMoving = false;
             OnUnitMoved?.Invoke(targetCoord);
@@ -199,27 +206,6 @@ namespace TBS.UnitSystem
         }
 
         // ─── 视觉 ─────────────────────────────────────────────────
-
-        public void UpdateVisuals()
-        {
-            if (UnitLogic == null) return;
-            if (Text_ATK      != null) Text_ATK.text      = $"ATK:{UnitLogic.EffectiveAttack}";
-            if (Text_DEF      != null) Text_DEF.text      = $"DEF:{UnitLogic.EffectiveDefense}";
-            if (Text_UnitName != null) Text_UnitName.text = UnitLogic.DisplayName;
-            if (Text_State    != null) Text_State.text    = GetStateLabel(UnitLogic.State);
-            UpdateStrengthBars();
-            UpdateFactionColors();
-        }
-
-        void UpdateStrengthBars()
-        {
-            if (StrengthBars == null || UnitLogic == null) return;
-            for (int i = 0; i < StrengthBars.Length; i++)
-            {
-                var r = StrengthBars[i]?.GetComponent<Renderer>();
-                if (r != null) r.material.color = i < UnitLogic.Strength ? Color.green : Color.gray;
-            }
-        }
 
         void UpdateFactionColors()
         {

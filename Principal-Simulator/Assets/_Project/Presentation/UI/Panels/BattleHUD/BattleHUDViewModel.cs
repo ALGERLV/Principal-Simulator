@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using UnityEngine;
 using TBS.Presentation.UI;
 
 namespace TBS.Presentation.UI.Panels.BattleHUD
@@ -17,15 +18,26 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
             set => SetProperty(value);
         }
 
+        public string TimeText
+        {
+            get => GetProperty<string>();
+            set => SetProperty(value);
+        }
+
         public BattleHUDViewModel()
         {
             GameTitle = "电子战棋";
             DayText = "第 1 天";
+            TimeText = "0:00";
         }
 
-        public void UpdateTime(int gameDay)
+        public void UpdateTime(float gameHours)
         {
-            DayText = $"第 {gameDay} 天";
+            int day = Mathf.FloorToInt(gameHours / 24f);
+            int hour = Mathf.FloorToInt(gameHours);
+
+            DayText = $"第 {day + 1} 天";
+            TimeText = $"{hour}小时";
         }
     }
 }

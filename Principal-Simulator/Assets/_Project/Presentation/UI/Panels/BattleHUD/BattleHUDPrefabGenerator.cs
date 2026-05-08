@@ -90,8 +90,22 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
                 dayText.alignment = TextAnchor.MiddleCenter;
                 dayText.color = Color.white;
                 var dayRect = dayGO.GetComponent<RectTransform>();
-                dayRect.anchoredPosition = new Vector2(0, 0);
+                dayRect.anchoredPosition = new Vector2(-100, 0);
                 dayRect.sizeDelta = new Vector2(200, 50);
+
+                // 时间文本（中）
+                var timeGO = new GameObject("TimeText");
+                timeGO.transform.SetParent(topBarGO.transform, false);
+                var timeText = timeGO.AddComponent<Text>();
+                timeText.text = "0:00";
+                timeText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                timeText.fontSize = 24;
+                timeText.fontStyle = FontStyle.Normal;
+                timeText.alignment = TextAnchor.MiddleCenter;
+                timeText.color = Color.white;
+                var timeRect = timeGO.GetComponent<RectTransform>();
+                timeRect.anchoredPosition = new Vector2(100, 0);
+                timeRect.sizeDelta = new Vector2(200, 50);
 
                 // 菜单按钮（右）
                 var menuBtnGO = new GameObject("MenuButton");
@@ -128,7 +142,7 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
                 menuTextRect.offsetMax = Vector2.zero;
 
                 // 关联View中的引用
-                view.SetUIElements(titleText, dayText, menuButton);
+                view.SetUIElements(titleText, dayText, timeText, menuButton);
 
                 // 保存预制体
                 canvasGO.hideFlags = HideFlags.None;

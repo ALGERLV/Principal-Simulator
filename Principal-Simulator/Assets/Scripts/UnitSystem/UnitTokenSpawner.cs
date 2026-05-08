@@ -76,6 +76,54 @@ namespace TBS.UnitSystem
             return token;
         }
 
+        /// <summary>
+        /// 使用外部传入的 UnitRuntimeParams 生成单位
+        /// </summary>
+        public UnitToken SpawnUnit(HexCoord spawnCoord, TBS.Unit.UnitRuntimeParams runtimeParams)
+        {
+            if (runtimeParams == null)
+            {
+                Debug.LogError("UnitTokenSpawner: runtimeParams 为空");
+                return null;
+            }
+
+            var hexGrid = FindObjectOfType<HexGrid>();
+            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 HexGrid"); return null; }
+
+            var tile = hexGrid.GetTile(spawnCoord);
+            if (tile == null)
+            {
+                tile = FindFirstAvailableTile(hexGrid);
+                if (tile == null) { Debug.LogError("UnitTokenSpawner: 无可用地块"); return null; }
+                spawnCoord = tile.Coord;
+            }
+            if (tile.IsOccupied) { Debug.LogWarning($"UnitTokenSpawner: {spawnCoord} 已被占据"); return null; }
+
+            Vector3 worldPos = hexGrid.CoordToWorldPosition(spawnCoord);
+            worldPos.y = tokenHeight;
+
+            var unitsContainer = GameObject.Find("[Units]");
+            if (unitsContainer == null)
+                unitsContainer = new GameObject("[Units]");
+
+            var root = new GameObject($"Unit_{runtimeParams.DisplayName}");
+            root.transform.SetParent(unitsContainer.transform, false);
+            root.transform.position = worldPos;
+            root.tag = "UnitToken";
+
+            var unit  = root.AddComponent<TBS.Unit.Unit>();
+            var token = root.AddComponent<UnitToken>();
+
+            // 使用传入的 RuntimeParams
+            unit.InitializeRuntime(runtimeParams, spawnCoord);
+
+            BuildVisuals(root, token);
+            token.InitializeOnTile(spawnCoord);
+
+            Debug.Log($"UnitTokenSpawner: 生成 {runtimeParams.DisplayName} @ {spawnCoord}  速度={unit.MoveSpeedKmPerDay}km/day");
+            return token;
+        }
+
         // ─────────────────────────────────────────────────────────
 
         TBS.Unit.UnitRuntimeParams BuildRuntimeParams() => new TBS.Unit.UnitRuntimeParams

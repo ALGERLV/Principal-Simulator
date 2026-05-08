@@ -1,5 +1,19 @@
 # UI 生成常见问题排查
 
+## 前置要求
+
+**所有 UI 生成脚本都要求场景中已存在 EventSystem。**
+
+步骤：
+1. 菜单 → GameObject → UI → Event System
+2. 创建一次后，所有 UI Prefab 生成脚本都能正常工作
+
+**注意：** UI 生成脚本 **不再自动创建 EventSystem**（已移除此逻辑）。原因是：
+- EventSystem 应该在场景启动时就存在，而非由 Prefab 生成脚本创建
+- 防止重复创建多个 EventSystem
+
+---
+
 ## 问题 1：UI 按钮点击无响应
 
 **症状：** 
@@ -11,12 +25,11 @@
 场景中缺少 **EventSystem** 组件，导致 UI 事件系统无法工作。
 
 **解决方案：**
-1. 自动方案（推荐）：运行 `Tools → 生成UI预制体 → 生成MainMenu` 时会自动创建 EventSystem
-2. 手动方案：菜单 → GameObject → UI → Event System
+菜单 → GameObject → UI → Event System
 
 **预防方式：**
-- 所有 UI 生成脚本都应该在 `GenerateMainMenuPrefab()` 开始时调用 `EnsureEventSystem()`
-- 参考：[MainMenuPrefabGenerator.cs](../MainMenuPrefabGenerator.cs) 第 14-30 行
+- 在开发任何 UI 前，先确保场景中有 EventSystem
+- 参考 [前置要求](#前置要求) 部分
 
 ---
 
@@ -60,7 +73,7 @@ canvasGO.AddComponent<GraphicRaycaster>();         // 必须有 GraphicRaycaster
 
 在生成任何 UI 时必须确保：
 
-- [ ] EventSystem 存在（自动检查：`EnsureEventSystem()`）
+- [ ] **EventSystem 已在场景中存在**（菜单 → GameObject → UI → Event System）
 - [ ] Canvas.renderMode = ScreenSpaceOverlay
 - [ ] Canvas 有 GraphicRaycaster 组件
 - [ ] Button.interactable = true
@@ -69,27 +82,17 @@ canvasGO.AddComponent<GraphicRaycaster>();         // 必须有 GraphicRaycaster
 
 ---
 
-## 代码片段（复制到新的 UI 生成脚本）
+## UI 生成脚本模板
+
+创建新 UI 时，**不要** 调用 EnsureEventSystem()，代码应该看起来像这样：
 
 ```csharp
 [UnityEditor.MenuItem("Tools/生成UI预制体/生成XXX")]
 public static void GenerateXXXPrefab()
 {
-    // 第一步：确保 EventSystem 存在
-    EnsureEventSystem();
-
-    // 后续生成逻辑...
-}
-
-private static void EnsureEventSystem()
-{
-    var eventSystem = UnityEngine.EventSystems.EventSystem.current;
-    if (eventSystem != null) return;
-
-    var eventSystemGO = new GameObject("EventSystem");
-    eventSystemGO.AddComponent<UnityEngine.EventSystems.EventSystem>();
-    eventSystemGO.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
-    Debug.Log("[UIGenerator] 自动创建 EventSystem");
+    // 直接开始生成逻辑，无需创建 EventSystem
+    string prefabPath = "Assets/Resources/Prefabs/UI/XXX/XXX.prefab";
+    // ... 生成逻辑 ...
 }
 ```
 
@@ -97,6 +100,7 @@ private static void EnsureEventSystem()
 
 **最后更新：** 2026-05-07  
 **相关文件：** 
+- BattleHUDPrefabGenerator.cs
+- SpawnPanelPrefabGenerator.cs
 - MainMenuPrefabGenerator.cs
-- MainMenuView.cs
-- UIManager.cs
+

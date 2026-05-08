@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TBS.Map.API;
 using TBS.Map.Data;
+using TBS.Map.Repositories;
 using TBS.Map.Tools;
 using UnityEngine;
 
@@ -50,6 +51,8 @@ namespace TBS.Map.Components
         [SerializeField] private TerrainData[] randomTerrains; // 随机地形数组
         [SerializeField] private float randomTerrainChance = 0.3f; // 随机地形概率
         [SerializeField] private Transform tileParent;
+        [SerializeField, Tooltip("如果为true，将自动从TerrainLibrary加载地形")]
+        private bool autoLoadTerrains = true;
 
         #endregion
 
@@ -110,6 +113,23 @@ namespace TBS.Map.Components
         private void Awake()
         {
             tiles = new Dictionary<HexCoord, HexTile>();
+
+            // 初始化地形库
+            TerrainLibrary.Initialize();
+
+            // 自动加载地形
+            if (autoLoadTerrains && (randomTerrains == null || randomTerrains.Length == 0))
+            {
+                randomTerrains = TerrainLibrary.GetAllTerrains();
+                Debug.Log($"[HexGrid] 自动加载了 {randomTerrains.Length} 个地形");
+            }
+
+            // 如果没有设置默认地形，使用平原
+            if (defaultTerrain == null)
+            {
+                defaultTerrain = TerrainLibrary.GetTerrainById("plain") ?? randomTerrains?[0];
+            }
+
             CalculateBounds();
         }
 
@@ -650,9 +670,7 @@ namespace TBS.Map.Components
 
         private TerrainData FindTerrainById(string terrainId)
         {
-            // 这里可以通过资源管理器查找地形数据
-            // 暂时返回默认地形
-            return defaultTerrain;
+            return TerrainLibrary.GetTerrainById(terrainId) ?? defaultTerrain;
         }
 
         #endregion

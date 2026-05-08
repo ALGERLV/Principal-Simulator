@@ -6,9 +6,9 @@
 ```
 菜单 → Tools → 生成UI预制体 → 生成MainMenu
 ```
-脚本会自动生成完整的UI界面并直接保存到 `Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab`
+脚本会自动生成完整的UI界面并直接保存到 `Assets/Resources/UI/MainMenu.prefab`
 
-**注意**：Prefab现在直接生成到Resources文件夹中，无需手动移动！
+**注意**：所有UI Prefab都直接放在 `Assets/Resources/UI/` 目录下，不创建子文件夹！
 
 ### Step 2: 配置场景
 
@@ -100,19 +100,26 @@ bool visible = UIManager.Instance.IsVisible<MainMenuView>();
 
 ```
 Assets/
-├── Resources/Prefabs/UI/MainMenu/
-│   └── MainMenu.prefab             # UIManager加载的文件
+├── Resources/UI/
+│   ├── MainMenu.prefab             # 所有UI Prefab直接放在这里
+│   ├── BattleHUD.prefab
+│   ├── SpawnPanel.prefab
+│   └── ...
 │
 └── _Project/Presentation/
     ├── UI/
     │   ├── Core/                   # UI框架核心
-    │   └── Panels/MainMenu/
-    │       ├── MainMenuView.cs
-    │       ├── MainMenuPresenter.cs
-    │       ├── MainMenuViewModel.cs
-    │       └── MainMenuPrefabGenerator.cs
+    │   └── Panels/                 # 所有UI代码
+    │       ├── MainMenu/           # 源代码文件（View、Presenter、ViewModel）
+    │       ├── BattleHUD/
+    │       ├── SpawnPanel/
+    │       └── ...
     └── UIInitializer.cs            # UI系统初始化
 ```
+
+**说明**：
+- **代码文件** (`View.cs`, `Presenter.cs`, `ViewModel.cs`)：按面板类型分文件夹组织在 `_Project/Presentation/UI/Panels/` 下
+- **Prefab文件** (`.prefab`)：全部集中在 `Assets/Resources/UI/` 目录下，不创建子文件夹
 
 ## 常见问题
 
@@ -125,7 +132,7 @@ A: 生成Prefab后，直接在Unity编辑器中打开Prefab编辑模式，修改
 ### Q: 按钮点击没有反应？
 A: 检查以下几点：
 1. UIInitializer脚本是否在场景中
-2. Prefab是否正确生成到 `Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab`
+2. Prefab是否正确生成到 `Assets/Resources/UI/MainMenu.prefab`
 3. Console中是否有错误日志
 
 ### Q: 如何自定义按钮行为？

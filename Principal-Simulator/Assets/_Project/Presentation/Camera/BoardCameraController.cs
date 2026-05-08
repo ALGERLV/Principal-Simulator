@@ -150,6 +150,20 @@ namespace TBS.Presentation.Camera
             }
         }
 
+        /// <summary>
+        /// 启用/禁用屏幕边缘滚动功能
+        /// </summary>
+        public void SetEdgeScrollingEnabled(bool enabled)
+        {
+            useEdgeScrolling = enabled;
+            Debug.Log($"[BoardCameraController] 屏幕边缘滚动已{(enabled ? "启用" : "禁用")}");
+        }
+
+        /// <summary>
+        /// 获取屏幕边缘滚动是否启用
+        /// </summary>
+        public bool IsEdgeScrollingEnabled => useEdgeScrolling;
+
         #endregion
 
         #region Initialization

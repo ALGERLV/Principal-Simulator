@@ -13,8 +13,8 @@ namespace TBS.Presentation.UI.Panels.MainMenu
         [UnityEditor.MenuItem("Tools/生成UI预制体/生成MainMenu")]
         public static void GenerateMainMenuPrefab()
         {
-            // 定义Prefab保存路径（直接生成到Resources文件夹）
-            string prefabPath = "Assets/Resources/Prefabs/UI/MainMenu/MainMenu.prefab";
+            // 直接生成到 Assets/Resources/UI/ 目录，不创建子文件夹
+            string prefabPath = "Assets/Resources/UI/MainMenu.prefab";
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(prefabPath));
 
             // 检查预制体是否已存在

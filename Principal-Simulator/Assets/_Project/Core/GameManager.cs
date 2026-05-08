@@ -4,6 +4,8 @@ using TBS.Contracts.Events;
 using TBS.Presentation;
 using TBS.Presentation.UI;
 using TBS.Presentation.UI.Panels.MainMenu;
+using TBS.Presentation.UI.Panels.BattleHUD;
+using TBS.Presentation.UI.Panels.SpawnPanel;
 
 namespace TBS.Core
 {
@@ -30,6 +32,13 @@ namespace TBS.Core
             }
 
             Instance = this;
+
+            // 确保 SpawnController 存在
+            if (GetComponent<SpawnController>() == null)
+            {
+                gameObject.AddComponent<SpawnController>();
+                Debug.Log("[GameManager] 动态添加了 SpawnController");
+            }
 
             // 订阅事件
             EventBus.On<GameStartRequestedEvent>(OnGameStartRequested);
@@ -79,6 +88,8 @@ namespace TBS.Core
         {
             SetState(GameState.MainMenu);
             UIManager.Instance.Show<MainMenuView>();
+            UIManager.Instance.Hide<BattleHUDView>();
+            UIManager.Instance.Hide<SpawnPanelView>();
             if (inputRouter != null)
                 inputRouter.Enabled = false;
         }
@@ -105,6 +116,8 @@ namespace TBS.Core
         public void StartGame()
         {
             UIManager.Instance.Hide<MainMenuView>();
+            UIManager.Instance.Show<BattleHUDView>();
+            UIManager.Instance.Show<SpawnPanelView>();
             SetState(GameState.InGame);
             if (inputRouter != null)
                 inputRouter.Enabled = true;

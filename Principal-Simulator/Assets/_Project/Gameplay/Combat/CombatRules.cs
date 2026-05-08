@@ -24,7 +24,7 @@ namespace TBS.Gameplay.Combat
             p.TerrainDefenseBonus   = _terrain.GetDefenseBonus(p.DefenderCoord);
         }
 
-        float GetAttackMod(HexCoord coord)
+        float GetAttackMod(MapHexCoord coord)
         {
             // 从防御加成反推地形攻击系数（正式项目可扩展 ITerrainQuery 提供攻击修正）
             float def = _terrain.GetDefenseBonus(coord);
@@ -101,7 +101,7 @@ namespace TBS.Gameplay.Combat
             p.CombinedAttackBonus = _bonuses[idx];
         }
 
-        int CountAttackDirections(HexCoord attacker, HexCoord defender)
+        int CountAttackDirections(MapHexCoord attacker, MapHexCoord defender)
         {
             // 单攻方时从 attacker→defender 方向出发，统计到有友军的相邻格方向数
             var neighbors = defender.GetNeighbors();

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using TBS.Map.Tools;
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
 
@@ -13,7 +13,7 @@ namespace TBS.UnitSystem
     public class UnitSelectionManager : MonoBehaviour
     {
         [Header("引用")]
-        public HexGrid hexGrid;
+        public MapTerrainGrid hexGrid;
         public Camera gameCamera;
 
         [Header("高亮设置")]
@@ -38,7 +38,7 @@ namespace TBS.UnitSystem
         {
             // 获取引用
             if (hexGrid == null)
-                hexGrid = FindObjectOfType<HexGrid>();
+                hexGrid = FindObjectOfType<MapTerrainGrid>();
             if (gameCamera == null)
                 gameCamera = Camera.main;
 
@@ -89,7 +89,7 @@ namespace TBS.UnitSystem
                             return;
                         }
 
-                        var tile = hit.collider.GetComponent<HexTile>();
+                        var tile = hit.collider.GetComponent<MapTileCell>();
                         if (tile != null)
                         {
                             Debug.Log($"点击了地块: {tile.Coord}");
@@ -155,7 +155,7 @@ namespace TBS.UnitSystem
         /// <summary>
         /// 尝试移动选中单位到目标坐标
         /// </summary>
-        void TryMoveSelectedUnit(HexCoord targetCoord)
+        void TryMoveSelectedUnit(MapHexCoord targetCoord)
         {
             if (selectedUnit == null) return;
 
@@ -201,7 +201,7 @@ namespace TBS.UnitSystem
         /// <summary>
         /// 创建高亮效果
         /// </summary>
-        void CreateHighlight(HexCoord coord)
+        void CreateHighlight(MapHexCoord coord)
         {
             Vector3 worldPos = hexGrid.CoordToWorldPosition(coord);
             worldPos.y += highlightHeight;
@@ -230,7 +230,7 @@ namespace TBS.UnitSystem
         /// <summary>
         /// 创建默认高亮对象 - 使用圆柱体作为六边形近似
         /// </summary>
-        GameObject CreateDefaultHighlight(Vector3 position, HexCoord coord)
+        GameObject CreateDefaultHighlight(Vector3 position, MapHexCoord coord)
         {
             // 使用圆柱体创建六边形高亮（6边形圆柱）
             var go = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -289,7 +289,7 @@ namespace TBS.UnitSystem
         /// <summary>
         /// 通过射线检测获取点击的地块坐标
         /// </summary>
-        public bool GetTileAtScreenPosition(Vector2 screenPos, out HexCoord coord)
+        public bool GetTileAtScreenPosition(Vector2 screenPos, out MapHexCoord coord)
         {
             coord = default;
             
@@ -300,7 +300,7 @@ namespace TBS.UnitSystem
 
             if (Physics.Raycast(ray, out hit, raycastDistance, tileLayer))
             {
-                var tile = hit.collider.GetComponent<HexTile>();
+                var tile = hit.collider.GetComponent<MapTileCell>();
                 if (tile != null)
                 {
                     coord = tile.Coord;

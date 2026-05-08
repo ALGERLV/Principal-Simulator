@@ -28,7 +28,7 @@ namespace TBS.Editor
             var go = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             go.name = "Unit";
 
-            // 3. 调整胶囊体大小（比 HexTile 略小）
+            // 3. 调整胶囊体大小（比 MapSurfaceTile 略小）
             go.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
 
             // 4. 创建默认白色材质（颜色由 UnitRenderer 运行时用 MaterialPropertyBlock 覆盖）

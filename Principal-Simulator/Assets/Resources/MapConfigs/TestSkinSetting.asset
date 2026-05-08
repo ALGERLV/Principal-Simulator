@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b7baa450e20f6c46b4c7d6a7ac32663, type: 3}
+  m_Name: TestSkinSetting
+  m_EditorClassIdentifier: 
+  skinId: default
+  displayName: 默认皮肤
+  description: 测试场景使用的默认地形皮肤
+  terrainSkins:
+  - terrainId: plain
+    baseTexture: {fileID: 0}
+    normalMap: {fileID: 0}
+    tintColor: {r: 0.7, g: 0.8, b: 0.4, a: 1}
+    elevationOffset: 0
+    randomDecorations: []
+  - terrainId: forest
+    baseTexture: {fileID: 0}
+    normalMap: {fileID: 0}
+    tintColor: {r: 0.2, g: 0.5, b: 0.2, a: 1}
+    elevationOffset: 0.2
+    randomDecorations: []
+  - terrainId: mountain
+    baseTexture: {fileID: 0}
+    normalMap: {fileID: 0}
+    tintColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    elevationOffset: 1
+    randomDecorations: []
+  defaultMaterial: {fileID: 0}

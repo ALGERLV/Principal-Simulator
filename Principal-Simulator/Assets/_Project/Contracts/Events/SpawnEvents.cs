@@ -10,7 +10,7 @@ namespace TBS.Contracts.Events
 
     public struct UnitSpawnRequestedEvent
     {
-        public HexCoord TargetCoord;
+        public MapHexCoord TargetCoord;
         public UnitRuntimeParams Params;
     }
 

@@ -1,4 +1,5 @@
 using System;
+using TBS.Map.Runtime;
 using TBS.Map.Components;
 using TBS.Map.Tools;
 using UnityEngine;
@@ -15,7 +16,7 @@ namespace TBS.Presentation.Camera
         #region Serialized Fields
 
         [Header("目标设置")]
-        [SerializeField] private HexGrid targetGrid;
+        [SerializeField] private MapTerrainGrid targetGrid;
         [SerializeField] private Transform targetTransform;
 
         [Header("移动设置")]
@@ -176,7 +177,7 @@ namespace TBS.Presentation.Camera
             // 如果没有指定目标网格，尝试自动查找
             if (targetGrid == null)
             {
-                targetGrid = FindObjectOfType<HexGrid>();
+                targetGrid = FindObjectOfType<MapTerrainGrid>();
             }
 
             // 计算地图边界
@@ -207,7 +208,7 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 设置目标网格
         /// </summary>
-        public void SetTargetGrid(HexGrid grid)
+        public void SetTargetGrid(MapTerrainGrid grid)
         {
             targetGrid = grid;
             CalculateMapBounds();
@@ -465,7 +466,7 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 聚焦到指定坐标
         /// </summary>
-        public void FocusOnCoord(HexCoord coord)
+        public void FocusOnCoord(MapHexCoord coord)
         {
             if (targetGrid == null) return;
 
@@ -517,13 +518,13 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 获取当前视野范围内的地块
         /// </summary>
-        public HexTile[] GetVisibleTiles()
+        public MapTileCell[] GetVisibleTiles()
         {
-            if (targetGrid == null) return new HexTile[0];
+            if (targetGrid == null) return new MapTileCell[0];
 
             // 使用视锥体检测可见地块
             var allTiles = targetGrid.GetAllTiles();
-            var visibleTiles = new System.Collections.Generic.List<HexTile>();
+            var visibleTiles = new System.Collections.Generic.List<MapTileCell>();
 
             Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(cam);
 

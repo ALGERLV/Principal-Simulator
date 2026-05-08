@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b473d27c98abcf74494aff970a9cd16a, type: 3}
+  m_Name: Hill
+  m_EditorClassIdentifier: 
+  terrainId: hill
+  terrainName: 丘陵
+  description: 起伏的丘陵地带，提供良好的战术优势
+  movementCost: 2
+  isPassable: 1
+  defenseBonus: 0.15
+  attackBonus: 0.05
+  visibilityModifier: 1
+  terrainColor: {r: 0.6, g: 0.6, b: 0.3, a: 1}
+  terrainMaterial: {fileID: 0}
+  features:
+  - hill
+  - elevation
+  terrainProperties:
+    pairs: []

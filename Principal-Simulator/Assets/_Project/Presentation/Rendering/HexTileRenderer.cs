@@ -1,3 +1,4 @@
+using TBS.Map.Runtime;
 using TBS.Map.Tools;
 using UnityEngine;
 
@@ -8,13 +9,13 @@ namespace TBS.Map.Components
     /// </summary>
     public class HexTileRenderer : MonoBehaviour
     {
-        [SerializeField] private HexTile tile;
+        [SerializeField] private MapTileCell tile;
         [SerializeField] private MeshRenderer meshRenderer;
         [SerializeField] private MeshFilter meshFilter;
 
         private void Awake()
         {
-            tile = GetComponent<HexTile>();
+            tile = GetComponent<MapTileCell>();
             meshRenderer = GetComponent<MeshRenderer>();
             meshFilter = GetComponent<MeshFilter>();
 

@@ -27,7 +27,7 @@ namespace TBS.Unit
         int FortificationLevel { get; }
         float FortificationProgress { get; }
 
-        HexCoord Position { get; }
+        MapHexCoord Position { get; }
     }
 
     /// <summary>

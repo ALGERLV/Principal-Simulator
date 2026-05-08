@@ -12,8 +12,8 @@ namespace TBS.Contracts.Events
         public IUnitToken Attacker;
         public IUnitToken Defender;
         public CombatType Type;
-        public HexCoord AttackerCoord;
-        public HexCoord DefenderCoord;
+        public MapHexCoord AttackerCoord;
+        public MapHexCoord DefenderCoord;
     }
 
     public struct DamageDealtEvent
@@ -43,20 +43,20 @@ namespace TBS.Contracts.Events
     public struct UnitRoutedEvent
     {
         public IUnitToken Unit;
-        public HexCoord RetreatTarget;
+        public MapHexCoord RetreatTarget;
     }
 
     public struct UnitEliminatedEvent
     {
         public IUnitToken Unit;
         public IUnitToken KilledBy;
-        public HexCoord LastPosition;
+        public MapHexCoord LastPosition;
     }
 
     public struct OverrunTriggeredEvent
     {
         public IUnitToken Attacker;
-        public HexCoord FromCoord;
+        public MapHexCoord FromCoord;
     }
 
     public struct SuppressionAppliedEvent

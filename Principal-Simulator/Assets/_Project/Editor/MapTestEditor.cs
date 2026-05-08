@@ -1,5 +1,5 @@
-using TBS.Map.Components;
 using TBS.Map.Data;
+using TBS.Map.Runtime;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,7 +13,7 @@ namespace TBS.Map.Editor
     /// </summary>
     public class MapTestEditor : EditorWindow
     {
-        private HexGrid hexGrid;
+        private MapTerrainGrid hexGrid;
         private int mapWidth = 10;
         private int mapHeight = 8;
         private GameObject tilePrefab;
@@ -31,7 +31,7 @@ namespace TBS.Map.Editor
             EditorGUILayout.Space();
 
             // 查找或创建HexGrid
-            hexGrid = FindObjectOfType<HexGrid>();
+            hexGrid = FindObjectOfType<MapTerrainGrid>();
             if (hexGrid == null)
             {
                 EditorGUILayout.HelpBox("场景中未找到HexGrid，点击下面的按钮创建", MessageType.Warning);
@@ -98,7 +98,7 @@ namespace TBS.Map.Editor
         private void CreateHexGrid()
         {
             // 检查是否已存在
-            var existing = FindObjectOfType<HexGrid>();
+            var existing = FindObjectOfType<MapTerrainGrid>();
             if (existing != null)
             {
                 Selection.activeGameObject = existing.gameObject;
@@ -107,8 +107,8 @@ namespace TBS.Map.Editor
             }
 
             // 创建HexGrid游戏对象
-            var gridGO = new GameObject("HexGrid");
-            hexGrid = gridGO.AddComponent<HexGrid>();
+            var gridGO = new GameObject("MapTerrainGrid");
+            hexGrid = gridGO.AddComponent<MapTerrainGrid>();
 
             // 设置引用
             SerializedObject so = new SerializedObject(hexGrid);

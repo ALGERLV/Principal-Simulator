@@ -1,4 +1,4 @@
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 using TBS.Presentation.Camera;
 using UnityEditor;
 using UnityEngine;
@@ -10,7 +10,7 @@ namespace TBS.Editor
     /// </summary>
     public class CameraSetupEditor : EditorWindow
     {
-        private HexGrid targetGrid;
+        private MapTerrainGrid targetGrid;
         private BoardCameraConfig cameraConfig;
         private bool createNewCamera = true;
         private bool showAdvancedOptions = false;
@@ -29,17 +29,17 @@ namespace TBS.Editor
 
             // 目标网格选择
             targetGrid = EditorGUILayout.ObjectField(
-                "目标网格 (HexGrid)",
+                "目标网格 (MapTerrainGrid)",
                 targetGrid,
-                typeof(HexGrid),
+                typeof(MapTerrainGrid),
                 true
-            ) as HexGrid;
+            ) as MapTerrainGrid;
 
             // 自动查找网格
             if (targetGrid == null)
             {
                 EditorGUILayout.HelpBox(
-                    "未指定目标网格，将自动查找场景中的 HexGrid 组件",
+                    "未指定目标网格，将自动查找场景中的 MapTerrainGrid 组件",
                     MessageType.Info
                 );
             }
@@ -116,7 +116,7 @@ namespace TBS.Editor
             // 自动查找网格
             if (targetGrid == null)
             {
-                targetGrid = UnityEngine.Object.FindObjectOfType<HexGrid>();
+                targetGrid = UnityEngine.Object.FindObjectOfType<MapTerrainGrid>();
             }
 
             BoardCameraController controller;
@@ -206,7 +206,7 @@ namespace TBS.Editor
         [MenuItem("GameObject/TBS/Camera/Board Camera", false, 10)]
         public static void CreateBoardCamera(MenuCommand menuCommand)
         {
-            var grid = UnityEngine.Object.FindObjectOfType<HexGrid>();
+            var grid = UnityEngine.Object.FindObjectOfType<MapTerrainGrid>();
             var controller = BoardCameraSetup.CreateBoardCamera(grid);
 
             if (controller != null)

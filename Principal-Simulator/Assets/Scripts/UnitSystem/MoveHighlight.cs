@@ -8,9 +8,9 @@ namespace TBS.UnitSystem
     /// </summary>
     public class MoveHighlight : MonoBehaviour
     {
-        public HexCoord TargetCoord { get; private set; }
+        public MapHexCoord TargetCoord { get; private set; }
 
-        public void Initialize(HexCoord coord)
+        public void Initialize(MapHexCoord coord)
         {
             TargetCoord = coord;
         }

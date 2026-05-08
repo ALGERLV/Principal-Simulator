@@ -1,4 +1,4 @@
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 using UnityEngine;
 
 namespace TBS.Presentation.Camera
@@ -13,7 +13,7 @@ namespace TBS.Presentation.Camera
         /// </summary>
         /// <param name="targetGrid">目标六边形网格</param>
         /// <returns>创建的相机控制器</returns>
-        public static BoardCameraController CreateBoardCamera(HexGrid targetGrid = null)
+        public static BoardCameraController CreateBoardCamera(MapTerrainGrid targetGrid = null)
         {
             // 查找或创建相机对象
             UnityEngine.Camera cam = UnityEngine.Camera.main;
@@ -70,7 +70,7 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 创建带预设配置的相机
         /// </summary>
-        public static BoardCameraController CreateBoardCameraWithConfig(BoardCameraConfig config, HexGrid targetGrid = null)
+        public static BoardCameraController CreateBoardCameraWithConfig(BoardCameraConfig config, MapTerrainGrid targetGrid = null)
         {
             var controller = CreateBoardCamera(targetGrid);
 
@@ -86,7 +86,7 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 将现有相机转换为棋盘相机
         /// </summary>
-        public static BoardCameraController ConvertExistingCamera(UnityEngine.Camera camera, HexGrid targetGrid = null)
+        public static BoardCameraController ConvertExistingCamera(UnityEngine.Camera camera, MapTerrainGrid targetGrid = null)
         {
             if (camera == null)
             {

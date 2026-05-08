@@ -2,7 +2,7 @@ using UnityEngine;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
 using TBS.Map.Tools;
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 using TBS.Presentation.UI;
 
 namespace TBS.Presentation.UI.Panels.SpawnPanel
@@ -10,7 +10,7 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
     public class SpawnPanelPresenter : BasePresenter<SpawnPanelView, SpawnPanelViewModel>
     {
         private UnityEngine.Camera gameCamera;
-        private HexGrid hexGrid;
+        private MapTerrainGrid hexGrid;
 
         protected override void OnInitialize()
         {
@@ -18,12 +18,12 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
 
             // 获取摄像机和地网格
             gameCamera = UnityEngine.Camera.main;
-            hexGrid = Object.FindObjectOfType<HexGrid>();
+            hexGrid = Object.FindObjectOfType<MapTerrainGrid>();
 
             // 订阅鼠标点击事件
             EventBus.On<MouseButtonDownEvent>(OnMouseButtonDown);
 
-            Debug.Log($"[SpawnPanelPresenter] 初始化完成，Camera: {(gameCamera != null ? "有" : "无")}, HexGrid: {(hexGrid != null ? "有" : "无")}");
+            Debug.Log($"[SpawnPanelPresenter] 初始化完成，Camera: {(gameCamera != null ? "有" : "无")}, MapTerrainGrid: {(hexGrid != null ? "有" : "无")}");
         }
 
         private void OnMouseButtonDown(MouseButtonDownEvent evt)
@@ -50,7 +50,7 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
 
             if (hexGrid == null)
             {
-                hexGrid = Object.FindObjectOfType<HexGrid>();
+                hexGrid = Object.FindObjectOfType<MapTerrainGrid>();
                 if (hexGrid == null)
                 {
                     Debug.LogError("[SpawnPanelPresenter] HexGrid为空");
@@ -61,7 +61,7 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
             // 检测是否命中地块
             if (Physics.Raycast(ray, out hit, 1000f))
             {
-                var tile = hit.collider.GetComponent<HexTile>();
+                var tile = hit.collider.GetComponent<MapTileCell>();
                 if (tile != null && !tile.IsOccupied)
                 {
                     Debug.Log($"[SpawnPanelPresenter] 点击了空闲地块 {tile.Coord}，发送生成事件");

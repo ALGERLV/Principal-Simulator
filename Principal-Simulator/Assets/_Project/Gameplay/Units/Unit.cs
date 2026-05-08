@@ -17,7 +17,7 @@ namespace TBS.Unit
 
         #region Runtime State
 
-        private HexCoord position;
+        private MapHexCoord position;
         private int strength;
         private int morale;
         private int supply;
@@ -74,7 +74,7 @@ namespace TBS.Unit
         public UnitState State => stateMachine.CurrentState;
         public int FortificationLevel => fortificationLevel;
         public float FortificationProgress => fortificationProgress;
-        public HexCoord Position => position;
+        public MapHexCoord Position => position;
 
         #endregion
 
@@ -126,7 +126,7 @@ namespace TBS.Unit
 
         #region Initialize
 
-        public void Initialize(UnitData unitData, HexCoord coord)
+        public void Initialize(UnitData unitData, MapHexCoord coord)
         {
             data = unitData;
             position = coord;
@@ -142,7 +142,7 @@ namespace TBS.Unit
             CanReceiveOrders = true;
         }
 
-        public void SetPosition(HexCoord coord)
+        public void SetPosition(MapHexCoord coord)
         {
             position = coord;
         }
@@ -150,7 +150,7 @@ namespace TBS.Unit
         /// <summary>
         /// 运行时初始化，不依赖 ScriptableObject（测试 / 程序化生成用）
         /// </summary>
-        public void InitializeRuntime(UnitRuntimeParams p, HexCoord coord)
+        public void InitializeRuntime(UnitRuntimeParams p, MapHexCoord coord)
         {
             data = null;
             runtimeParams = p;

@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TBS.Map.Tools;
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 using TBS.Map.API;
 using TBS.Core;
 
@@ -12,8 +12,8 @@ namespace TBS.UnitSystem
     {
         public TBS.Unit.Unit UnitLogic { get; private set; }
 
-        [SerializeField] private HexCoord currentCoord;
-        public HexCoord CurrentCoord => currentCoord;
+        [SerializeField] private MapHexCoord currentCoord;
+        public MapHexCoord CurrentCoord => currentCoord;
 
         [Header("UI 引用（可选）")]
         public Renderer BorderRenderer;
@@ -27,11 +27,11 @@ namespace TBS.UnitSystem
         private bool isSelected;
         private bool isMoving;
         private Color originalBorderColor;
-        private HexGrid hexGrid;
+        private MapTerrainGrid hexGrid;
 
         public System.Action<UnitToken> OnUnitSelected;
         public System.Action<UnitToken> OnUnitDeselected;
-        public System.Action<HexCoord> OnUnitMoved;
+        public System.Action<MapHexCoord> OnUnitMoved;
 
         private static readonly Color Color_KMT_Elite  = new Color(0f, 0f, 0.5f);
         private static readonly Color Color_KMT_Normal = new Color(0f, 0.3f, 0.8f);
@@ -57,7 +57,7 @@ namespace TBS.UnitSystem
 
         void Start()
         {
-            hexGrid = FindObjectOfType<HexGrid>();
+            hexGrid = FindObjectOfType<MapTerrainGrid>();
             if (BorderRenderer != null)
                 originalBorderColor = BorderRenderer.material.color;
             EnsureClickable();
@@ -71,9 +71,9 @@ namespace TBS.UnitSystem
 
         // ─── 初始化 ───────────────────────────────────────────────
 
-        public void InitializeOnTile(HexCoord coord)
+        public void InitializeOnTile(MapHexCoord coord)
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<HexGrid>();
+            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
             currentCoord = coord;
             SnapToCoord(coord);
             hexGrid?.GetTile(coord)?.SetOccupyingUnit(this);
@@ -81,10 +81,10 @@ namespace TBS.UnitSystem
 
         // ─── 移动 ─────────────────────────────────────────────────
 
-        public void MoveTo(HexCoord targetCoord)
+        public void MoveTo(MapHexCoord targetCoord)
         {
             if (isMoving) return;
-            if (hexGrid == null) hexGrid = FindObjectOfType<HexGrid>();
+            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
 
             var targetTile = hexGrid?.GetTile(targetCoord);
             if (targetTile == null || !targetTile.CanEnter(this)) return;
@@ -94,7 +94,7 @@ namespace TBS.UnitSystem
             StartCoroutine(SmoothMove(targetCoord));
         }
 
-        private IEnumerator SmoothMove(HexCoord targetCoord)
+        private IEnumerator SmoothMove(MapHexCoord targetCoord)
         {
             isMoving = true;
 
@@ -139,21 +139,21 @@ namespace TBS.UnitSystem
             OnUnitMoved?.Invoke(targetCoord);
         }
 
-        public bool CanMoveTo(HexCoord targetCoord)
+        public bool CanMoveTo(MapHexCoord targetCoord)
         {
             if (isMoving) return false;
-            if (hexGrid == null) hexGrid = FindObjectOfType<HexGrid>();
+            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
             if (hexGrid == null) return false;
             if (currentCoord.DistanceTo(targetCoord) != 1) return false;
             var tile = hexGrid.GetTile(targetCoord);
             return tile != null && tile.CanEnter(this);
         }
 
-        public HexCoord[] GetValidMoveTargets()
+        public MapHexCoord[] GetValidMoveTargets()
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<HexGrid>();
-            if (hexGrid == null) return System.Array.Empty<HexCoord>();
-            var result = new System.Collections.Generic.List<HexCoord>();
+            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (hexGrid == null) return System.Array.Empty<MapHexCoord>();
+            var result = new System.Collections.Generic.List<MapHexCoord>();
             foreach (var n in currentCoord.GetNeighbors())
             {
                 var tile = hexGrid.GetTile(n);
@@ -249,7 +249,7 @@ namespace TBS.UnitSystem
 
         // ─── 辅助 ─────────────────────────────────────────────────
 
-        void SnapToCoord(HexCoord coord)
+        void SnapToCoord(MapHexCoord coord)
         {
             if (hexGrid == null) return;
             Vector3 pos = hexGrid.CoordToWorldPosition(coord);

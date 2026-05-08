@@ -1,6 +1,6 @@
 using UnityEngine;
 using TBS.Map.Tools;
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 
 namespace TBS.UnitSystem
 {
@@ -34,10 +34,10 @@ namespace TBS.UnitSystem
 
         // ─────────────────────────────────────────────────────────
 
-        public UnitToken SpawnUnit(HexCoord spawnCoord, TBS.Unit.UnitData unitData = null)
+        public UnitToken SpawnUnit(MapHexCoord spawnCoord, TBS.Unit.UnitData unitData = null)
         {
-            var hexGrid = FindObjectOfType<HexGrid>();
-            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 HexGrid"); return null; }
+            var hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapTerrainGrid"); return null; }
 
             var tile = hexGrid.GetTile(spawnCoord);
             if (tile == null)
@@ -78,7 +78,7 @@ namespace TBS.UnitSystem
         /// <summary>
         /// 使用外部传入的 UnitRuntimeParams 生成单位
         /// </summary>
-        public UnitToken SpawnUnit(HexCoord spawnCoord, TBS.Unit.UnitRuntimeParams runtimeParams)
+        public UnitToken SpawnUnit(MapHexCoord spawnCoord, TBS.Unit.UnitRuntimeParams runtimeParams)
         {
             if (runtimeParams == null)
             {
@@ -86,8 +86,8 @@ namespace TBS.UnitSystem
                 return null;
             }
 
-            var hexGrid = FindObjectOfType<HexGrid>();
-            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 HexGrid"); return null; }
+            var hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapTerrainGrid"); return null; }
 
             var tile = hexGrid.GetTile(spawnCoord);
             if (tile == null)
@@ -176,7 +176,7 @@ namespace TBS.UnitSystem
         }
 
 
-        HexTile FindFirstAvailableTile(HexGrid hexGrid)
+        MapTileCell FindFirstAvailableTile(MapTerrainGrid hexGrid)
         {
             foreach (var tile in hexGrid.AllTiles)
                 if (!tile.IsOccupied) return tile;

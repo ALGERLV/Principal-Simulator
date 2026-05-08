@@ -137,7 +137,7 @@ namespace TBS.Presentation.Camera
             // 随机选择一个坐标聚焦（假设网格中心在0,0）
             int q = Random.Range(-5, 5);
             int r = Random.Range(-5, 5);
-            var coord = new HexCoord(q, r);
+            var coord = new MapHexCoord(q, r);
 
             cameraController.FocusOnCoord(coord);
             Debug.Log($"[CameraDemo] 聚焦到坐标: {coord}");

@@ -9,8 +9,8 @@ namespace TBS.Contracts.Combat
     {
         public IUnitToken Attacker;
         public IUnitToken Defender;
-        public HexCoord AttackerCoord;
-        public HexCoord DefenderCoord;
+        public MapHexCoord AttackerCoord;
+        public MapHexCoord DefenderCoord;
 
         public float EffectiveAttack;
         public float EffectiveDefense;
@@ -46,8 +46,8 @@ namespace TBS.Contracts.Combat
     {
         WeatherType CurrentWeather { get; }
         float CurrentTimeHours { get; }
-        IUnitToken GetUnitAt(HexCoord coord);
-        bool IsOccupied(HexCoord coord);
+        IUnitToken GetUnitAt(MapHexCoord coord);
+        bool IsOccupied(MapHexCoord coord);
     }
 
     public interface IDamageCalculator
@@ -68,7 +68,7 @@ namespace TBS.Contracts.Combat
     {
         bool CanAttack(IUnitToken attacker, IUnitToken defender, CombatType type, out string reason);
         CombatResult ExecuteAssault(IUnitToken attacker, IUnitToken defender, IGameContext context);
-        void ExecuteArtillery(IUnitToken source, HexCoord targetCoord, IGameContext context);
+        void ExecuteArtillery(IUnitToken source, MapHexCoord targetCoord, IGameContext context);
         CombatResult ExecuteCombinedAssault(IReadOnlyList<IUnitToken> attackers, IUnitToken defender, IGameContext context);
     }
 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 using TBS.Map.Tools;
-using TBS.Map.Components;
+using TBS.Map.Runtime;
 
 namespace TBS.UnitSystem
 {
@@ -15,18 +15,18 @@ namespace TBS.UnitSystem
         public KeyCode spawnKey = KeyCode.K;
 
         [Tooltip("生成坐标（留 (0,0) 时自动选地图中央附近的第一个可用格）")]
-        public HexCoord spawnCoord = new HexCoord(5, 5);
+        public MapHexCoord spawnCoord = new MapHexCoord(5, 5);
 
         [Tooltip("每格代表的公里数（用于显示移动时间参考）")]
         [SerializeField] private bool autoFindCenter = true;
 
         private UnitTokenSpawner spawner;
-        private HexGrid hexGrid;
+        private MapTerrainGrid hexGrid;
         private bool spawned;
 
         void Start()
         {
-            hexGrid = FindObjectOfType<HexGrid>();
+            hexGrid = FindObjectOfType<MapTerrainGrid>();
             spawner = FindObjectOfType<UnitTokenSpawner>();
 
             // 若场景中没有 Spawner，动态添加一个
@@ -46,14 +46,14 @@ namespace TBS.UnitSystem
 
         void SpawnTestUnit()
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<HexGrid>();
+            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
             if (hexGrid == null)
             {
-                Debug.LogError("TestSpawnController: 场景中没有 HexGrid");
+                Debug.LogError("TestSpawnController: 场景中没有 MapTerrainGrid");
                 return;
             }
 
-            HexCoord coord = spawnCoord;
+            MapHexCoord coord = spawnCoord;
 
             if (autoFindCenter || !hexGrid.HasTile(coord))
             {
@@ -69,7 +69,7 @@ namespace TBS.UnitSystem
             }
         }
 
-        static HexCoord FindNearCenter(HexGrid grid)
+        static MapHexCoord FindNearCenter(MapTerrainGrid grid)
         {
             int cx = grid.Width  / 2;
             int cy = grid.Height / 2;
@@ -77,7 +77,7 @@ namespace TBS.UnitSystem
             // 从中心向外螺旋搜索第一个空闲格
             for (int r = 0; r <= Mathf.Max(grid.Width, grid.Height); r++)
             {
-                var coord = new HexCoord(cx, cy);
+                var coord = new MapHexCoord(cx, cy);
                 var spiral = coord.GetSpiral(r);
                 foreach (var c in spiral)
                 {
@@ -86,7 +86,7 @@ namespace TBS.UnitSystem
                         return c;
                 }
             }
-            return new HexCoord(cx, cy);
+            return new MapHexCoord(cx, cy);
         }
     }
 }

@@ -80,7 +80,7 @@ namespace TBS.Gameplay.Combat
 
         // ─── 炮击 ─────────────────────────────────────────────────────────────
 
-        public void ExecuteArtillery(IUnitToken source, HexCoord targetCoord, IGameContext context)
+        public void ExecuteArtillery(IUnitToken source, MapHexCoord targetCoord, IGameContext context)
         {
             var target = context.GetUnitAt(targetCoord);
             if (target == null) return;
@@ -231,7 +231,7 @@ namespace TBS.Gameplay.Combat
             if (IsRouted(defender))
             {
                 defender.Morale = Mathf.Max(0, defender.Morale - 12); // 阵地被突破
-                HexCoord retreatTarget = FindRetreatTarget(defender, attacker, context);
+                MapHexCoord retreatTarget = FindRetreatTarget(defender, attacker, context);
                 EventBus.Emit(new UnitRoutedEvent { Unit = defender, RetreatTarget = retreatTarget });
                 retreated = true;
             }
@@ -281,7 +281,7 @@ namespace TBS.Gameplay.Combat
         static bool IsShaken(IUnitToken unit) =>
             unit.Morale <= 40 && unit.Morale > 20;
 
-        static HexCoord FindRetreatTarget(IUnitToken retreating, IUnitToken attacker, IGameContext context)
+        static MapHexCoord FindRetreatTarget(IUnitToken retreating, IUnitToken attacker, IGameContext context)
         {
             // 优先选择远离攻方的相邻格
             var neighbors = retreating.Position.GetNeighbors();

@@ -18,7 +18,7 @@ namespace TBS.Unit
         /// <summary>
         /// 在指定格坐标生成单位
         /// </summary>
-        public static Unit Create(UnitData data, HexCoord coord, Vector3 worldPos, Transform parent = null)
+        public static Unit Create(UnitData data, MapHexCoord coord, Vector3 worldPos, Transform parent = null)
         {
             if (unitPrefab == null)
             {

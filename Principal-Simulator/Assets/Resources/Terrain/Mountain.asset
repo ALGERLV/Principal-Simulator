@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b473d27c98abcf74494aaff970a9cd16a, type: 3}
+  m_Name: Mountain
+  m_EditorClassIdentifier: 
+  terrainId: mountain
+  terrainName: 山峰
+  description: 陨石林立的山峰，难以通行但提供制高点视野
+  movementCost: 99
+  isPassable: 0
+  defenseBonus: 0.4
+  attackBonus: 0.1
+  visibilityModifier: 2
+  terrainColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  terrainMaterial: {fileID: 0}
+  features:
+  - mountain
+  - highground
+  terrainProperties:
+    pairs: []

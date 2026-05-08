@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TBS.Map.Components;
 using TBS.Map.Data;
+using TBS.Map.Runtime;
 using TBS.Map.Tools;
 using UnityEngine;
 
@@ -21,7 +22,7 @@ namespace TBS.Map.Test
         [SerializeField] private GridShape testShape = GridShape.Rectangle;
 
         [Header("引用")]
-        [SerializeField] private HexGrid hexGrid;
+        [SerializeField] private MapTerrainGrid hexGrid;
         [SerializeField] private GameObject tilePrefab;
         [SerializeField] private TerrainData defaultTerrain;
 
@@ -44,7 +45,7 @@ namespace TBS.Map.Test
             // 查找或创建HexGrid
             if (hexGrid == null)
             {
-                hexGrid = FindObjectOfType<HexGrid>();
+                hexGrid = FindObjectOfType<MapTerrainGrid>();
                 if (hexGrid == null)
                 {
                     CreateHexGrid();
@@ -67,8 +68,8 @@ namespace TBS.Map.Test
         /// </summary>
         private void CreateHexGrid()
         {
-            GameObject gridGO = new GameObject("HexGrid");
-            hexGrid = gridGO.AddComponent<HexGrid>();
+            GameObject gridGO = new GameObject("MapTerrainGrid");
+            hexGrid = gridGO.AddComponent<MapTerrainGrid>();
 
             // 通过反射设置私有字段
             var type = hexGrid.GetType();
@@ -90,6 +91,9 @@ namespace TBS.Map.Test
                     break;
                 case GridShape.Circle:
                     hexGrid.GenerateCircle(Mathf.Min(testMapWidth, testMapHeight) / 2);
+                    break;
+                case GridShape.Hexagon:
+                    hexGrid.GenerateHexagon(Mathf.Min(testMapWidth, testMapHeight) / 2);
                     break;
             }
 
@@ -156,8 +160,8 @@ namespace TBS.Map.Test
             Debug.Log("[测试1] 坐标系统测试");
 
             // 测试坐标创建
-            var coord1 = new HexCoord(3, 4);
-            var coord2 = HexCoord.FromAxial(3, 4);
+            var coord1 = new MapHexCoord(3, 4);
+            var coord2 = MapHexCoord.FromAxial(3, 4);
             Debug.Log($"  坐标创建: {coord1} = {coord2} ? {coord1 == coord2}");
 
             // 测试邻接坐标
@@ -165,7 +169,7 @@ namespace TBS.Map.Test
             Debug.Log($"  邻接坐标数量: {neighbors.Length} (预期: 6)");
 
             // 测试距离计算
-            var coord3 = new HexCoord(0, 0);
+            var coord3 = new MapHexCoord(0, 0);
             int distance = coord3.DistanceTo(coord1);
             Debug.Log($"  距离计算: (0,0) 到 (3,4) = {distance}");
 
@@ -182,7 +186,7 @@ namespace TBS.Map.Test
             Debug.Log("[测试2] 地图查询测试");
 
             // 测试获取地块
-            var center = new HexCoord(0, 0);
+            var center = new MapHexCoord(0, 0);
             var tile = hexGrid.GetTile(center);
             Debug.Log($"  中心地块: {tile}");
 
@@ -226,7 +230,7 @@ namespace TBS.Map.Test
         {
             Debug.Log("[测试4] 范围查询测试");
 
-            var center = new HexCoord(0, 0);
+            var center = new MapHexCoord(0, 0);
 
             // 测试不同范围
             for (int range = 1; range <= 3; range++)
@@ -246,7 +250,7 @@ namespace TBS.Map.Test
         [ContextMenu("高亮测试")]
         public void HighlightTest()
         {
-            var center = new HexCoord(0, 0);
+            var center = new MapHexCoord(0, 0);
             var tilesInRange = hexGrid.GetTilesInRange(center, 2);
 
             foreach (var tile in tilesInRange)

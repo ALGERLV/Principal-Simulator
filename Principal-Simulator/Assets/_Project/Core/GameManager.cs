@@ -1,4 +1,5 @@
 using UnityEngine;
+using TBS.Map.Managers;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
 using TBS.Presentation;
@@ -121,6 +122,8 @@ namespace TBS.Core
             SetState(GameState.InGame);
             if (inputRouter != null)
                 inputRouter.Enabled = true;
+
+            MapManager.Instance?.InitializeMap();
 
             Debug.Log("[GameManager] 游戏开始 - 切换到 InGame");
         }

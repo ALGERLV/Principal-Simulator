@@ -449,7 +449,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ebf2f2551a4dd324489dff3d4042fb4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hexGrid: {fileID: 0}
+  mapManager: {fileID: 0}
   gameCamera: {fileID: 1025271402}
   highlightPrefab: {fileID: 0}
   validMoveColor: {r: 0, g: 1, b: 0, a: 0.3}
@@ -509,6 +509,7 @@ Transform:
   m_Children:
   - {fileID: 1228033374}
   - {fileID: 261738039}
+  - {fileID: 2145280403}
   m_Father: {fileID: 1833422670}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &565402929
@@ -866,7 +867,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 597d8a96a16f0354c9d1177a25459209, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetGrid: {fileID: 0}
+  targetManager: {fileID: 0}
   targetTransform: {fileID: 0}
   moveSpeed: 5
   dragSensitivity: 0.5
@@ -1274,6 +1275,70 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1413176586}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2145280402
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2145280403}
+  - component: {fileID: 2145280404}
+  m_Layer: 0
+  m_Name: MapManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2145280403
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145280402}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 565402928}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2145280404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2145280402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8f2a91b4d3e5f604a1b2c3d4e5f6078, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tilePrefab: {fileID: 1000000000000000000, guid: 70d5db865b57f1147a2cab36c0b11cc2, type: 3}
+  orientation: 0
+  hexSize: 1
+  terrainParent: {fileID: 1866929948}
+  useGridSetting: 1
+  gridSetting: {fileID: 11400000, guid: da3a77fef11b44f387527812b9e1d9fe, type: 2}
+  randomTerrains:
+  - {fileID: 11400000, guid: 9062706d4ab0410b84fbd66066edf5ae, type: 2}
+  - {fileID: 11400000, guid: 78e41d8ab3a24169b52074a2a4e557b1, type: 2}
+  randomChance: 0.367
+  defaultTerrain: {fileID: 11400000, guid: b0162a82b76844b9a5a46126f09b4aa2, type: 2}
+  riverMaterial: {fileID: 2100000, guid: 82d38b0b8592c6f42bda62841db56f02, type: 2}
+  riverMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  riverSetting: {fileID: 11400000, guid: fddc8afac0b94c2e911ecf88c8ae5156, type: 2}
+  roadMaterial: {fileID: 2100000, guid: ffeba74c77aaf784f8664859ef032427, type: 2}
+  roadMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+  roadSetting: {fileID: 11400000, guid: fddc8afac0b94c2e911ecf88c8ae5156, type: 2}
+  vegetationMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  vegetationMaterial: {fileID: 2100000, guid: 36f603d6b70ba14468bd2838eadb0f23, type: 2}
+  vegetationPerTile: 5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

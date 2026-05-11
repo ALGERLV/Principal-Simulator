@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using TBS.Map.Components;
 using TBS.Map.Data;
+using TBS.Map.Managers;
 using TBS.Map.Runtime;
 using TBS.Map.Tools;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace TBS.Map.Test
         [SerializeField] private GridShape testShape = GridShape.Rectangle;
 
         [Header("引用")]
-        [SerializeField] private MapTerrainGrid hexGrid;
+        [SerializeField] private MapManager mapManager;
         [SerializeField] private GameObject tilePrefab;
         [SerializeField] private TerrainData defaultTerrain;
 
@@ -42,92 +43,23 @@ namespace TBS.Map.Test
         /// </summary>
         public void InitializeAndGenerate()
         {
-            // 查找或创建HexGrid
-            if (hexGrid == null)
+            // 查找或创建MapManager
+            if (mapManager == null)
             {
-                hexGrid = FindObjectOfType<MapTerrainGrid>();
-                if (hexGrid == null)
+                mapManager = MapManager.Instance;
+                if (mapManager == null)
                 {
-                    CreateHexGrid();
-                }
-            }
-
-            // 设置参数
-            hexGrid.GetType().GetField("mapWidth", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(hexGrid, testMapWidth);
-            hexGrid.GetType().GetField("mapHeight", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(hexGrid, testMapHeight);
-
-            // 生成地图
-            GenerateTestMap();
-
-            // 运行测试
-            RunTests();
-        }
-
-        /// <summary>
-        /// 创建HexGrid对象
-        /// </summary>
-        private void CreateHexGrid()
-        {
-            GameObject gridGO = new GameObject("MapTerrainGrid");
-            hexGrid = gridGO.AddComponent<MapTerrainGrid>();
-
-            // 通过反射设置私有字段
-            var type = hexGrid.GetType();
-            type.GetField("tilePrefab", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(hexGrid, tilePrefab);
-            type.GetField("defaultTerrain", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(hexGrid, defaultTerrain);
-
-            Debug.Log("HexGrid已创建");
-        }
-
-        /// <summary>
-        /// 生成测试地图
-        /// </summary>
-        private void GenerateTestMap()
-        {
-            switch (testShape)
-            {
-                case GridShape.Rectangle:
-                    hexGrid.GenerateRectangle(testMapWidth, testMapHeight);
-                    break;
-                case GridShape.Circle:
-                    hexGrid.GenerateCircle(Mathf.Min(testMapWidth, testMapHeight) / 2);
-                    break;
-                case GridShape.Hexagon:
-                    hexGrid.GenerateHexagon(Mathf.Min(testMapWidth, testMapHeight) / 2);
-                    break;
-            }
-
-            // 如果有多种地形，随机设置一些特殊地形
-            if (testTerrains != null && testTerrains.Length > 0)
-            {
-                ApplyRandomTerrain();
-            }
-
-            Debug.Log($"测试地图生成完成: {hexGrid.TileCount}个地块");
-        }
-
-        /// <summary>
-        /// 随机应用地形
-        /// </summary>
-        private void ApplyRandomTerrain()
-        {
-            var tiles = hexGrid.GetAllTiles();
-            foreach (var tile in tiles)
-            {
-                // 随机选择地形（20%几率不是默认地形）
-                if (Random.value < 0.2f && testTerrains.Length > 0)
-                {
-                    int randomIndex = Random.Range(0, testTerrains.Length);
-                    tile.GetType().GetField("terrainData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(tile, testTerrains[randomIndex]);
-
-                    // 更新渲染
-                    var renderer = tile.GetComponent<HexTileRenderer>();
-                    if (renderer != null)
+                    mapManager = FindObjectOfType<MapManager>();
+                    if (mapManager == null)
                     {
-                        renderer.UpdateVisuals();
+                        Debug.LogError("[MapSystemTest] 场景中没有 MapManager，请先创建 MapManager");
+                        return;
                     }
                 }
             }
+
+            // 运行测试
+            RunTests();
         }
 
         /// <summary>
@@ -145,9 +77,6 @@ namespace TBS.Map.Test
 
             // 测试3: 地形效果
             TestTerrainEffects();
-
-            // 测试4: 范围查询
-            TestRangeQueries();
 
             Debug.Log("========== 地图系统测试完成 ==========");
         }
@@ -187,19 +116,11 @@ namespace TBS.Map.Test
 
             // 测试获取地块
             var center = new MapHexCoord(0, 0);
-            var tile = hexGrid.GetTile(center);
+            var tile = mapManager.GetTile(center);
             Debug.Log($"  中心地块: {tile}");
 
-            // 测试邻接地块
-            var neighbors = hexGrid.GetNeighbors(center);
-            Debug.Log($"  中心邻接地块数: {neighbors.Length}");
-
             // 测试地图边界
-            var bounds = hexGrid.Bounds;
-            Debug.Log($"  地图边界: {bounds}");
-
-            // 测试地块总数
-            Debug.Log($"  地块总数: {hexGrid.TileCount}");
+            Debug.Log($"  地块总数: {mapManager.Tiles.Count}");
         }
 
         /// <summary>
@@ -209,39 +130,20 @@ namespace TBS.Map.Test
         {
             Debug.Log("[测试3] 地形效果测试");
 
-            var tiles = hexGrid.GetAllTiles();
-            int testCount = Mathf.Min(3, tiles.Length);
+            var tiles = mapManager.Tiles;
+            int testCount = Mathf.Min(3, tiles.Count);
 
-            for (int i = 0; i < testCount; i++)
+            int index = 0;
+            foreach (var tile in tiles.Values)
             {
-                var tile = tiles[i];
+                if (index >= testCount) break;
                 Debug.Log($"  地块 {tile.Coord}:");
                 Debug.Log($"    地形: {tile.TerrainName}");
                 Debug.Log($"    移动消耗: {tile.MovementCost}");
                 Debug.Log($"    防御加成: {tile.DefenseBonus}");
                 Debug.Log($"    视野修正: {tile.VisibilityModifier}");
+                index++;
             }
-        }
-
-        /// <summary>
-        /// 测试范围查询
-        /// </summary>
-        private void TestRangeQueries()
-        {
-            Debug.Log("[测试4] 范围查询测试");
-
-            var center = new MapHexCoord(0, 0);
-
-            // 测试不同范围
-            for (int range = 1; range <= 3; range++)
-            {
-                var tilesInRange = hexGrid.GetTilesInRange(center, range);
-                Debug.Log($"  范围{range}: {tilesInRange.Length}个地块");
-            }
-
-            // 测试环形查询
-            var ringTiles = hexGrid.GetTilesInRing(center, 2);
-            Debug.Log($"  半径2的环: {ringTiles.Length}个地块");
         }
 
         /// <summary>
@@ -251,18 +153,21 @@ namespace TBS.Map.Test
         public void HighlightTest()
         {
             var center = new MapHexCoord(0, 0);
-            var tilesInRange = hexGrid.GetTilesInRange(center, 2);
+            var tiles = mapManager.Tiles;
 
-            foreach (var tile in tilesInRange)
+            foreach (var tile in tiles.Values)
             {
-                var renderer = tile.GetComponent<HexTileRenderer>();
-                if (renderer != null)
+                if (tile.Coord.DistanceTo(center) <= 2)
                 {
-                    renderer.Highlight(Color.yellow);
+                    var renderer = tile.GetComponent<HexTileRenderer>();
+                    if (renderer != null)
+                    {
+                        renderer.Highlight(Color.yellow);
+                    }
                 }
             }
 
-            Debug.Log($"已高亮 {tilesInRange.Length} 个地块");
+            Debug.Log($"已高亮中心范围2内的地块");
         }
 
         /// <summary>
@@ -271,8 +176,8 @@ namespace TBS.Map.Test
         [ContextMenu("清除高亮")]
         public void ClearHighlight()
         {
-            var tiles = hexGrid.GetAllTiles();
-            foreach (var tile in tiles)
+            var tiles = mapManager.Tiles;
+            foreach (var tile in tiles.Values)
             {
                 var renderer = tile.GetComponent<HexTileRenderer>();
                 if (renderer != null)

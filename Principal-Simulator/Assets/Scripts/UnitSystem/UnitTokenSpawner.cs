@@ -1,6 +1,7 @@
 using UnityEngine;
-using TBS.Map.Tools;
 using TBS.Map.Runtime;
+using TBS.Map.Tools;
+using TBS.Map.Managers;
 
 namespace TBS.UnitSystem
 {
@@ -36,19 +37,21 @@ namespace TBS.UnitSystem
 
         public UnitToken SpawnUnit(MapHexCoord spawnCoord, TBS.Unit.UnitData unitData = null)
         {
-            var hexGrid = FindObjectOfType<MapTerrainGrid>();
-            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapTerrainGrid"); return null; }
+            var mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = FindObjectOfType<MapManager>();
+            if (mapManager == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapManager"); return null; }
 
-            var tile = hexGrid.GetTile(spawnCoord);
+            var tile = mapManager.GetTile(spawnCoord);
             if (tile == null)
             {
-                tile = FindFirstAvailableTile(hexGrid);
+                tile = FindFirstAvailableTile(mapManager);
                 if (tile == null) { Debug.LogError("UnitTokenSpawner: 无可用地块"); return null; }
                 spawnCoord = tile.Coord;
             }
             if (tile.IsOccupied) { Debug.LogWarning($"UnitTokenSpawner: {spawnCoord} 已被占据"); return null; }
 
-            Vector3 worldPos = hexGrid.CoordToWorldPosition(spawnCoord);
+            Vector3 worldPos = mapManager.CoordToWorldPosition(spawnCoord);
             worldPos.y = tokenHeight;
 
             var unitsContainer = GameObject.Find("[Units]");
@@ -86,19 +89,21 @@ namespace TBS.UnitSystem
                 return null;
             }
 
-            var hexGrid = FindObjectOfType<MapTerrainGrid>();
-            if (hexGrid == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapTerrainGrid"); return null; }
+            var mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = FindObjectOfType<MapManager>();
+            if (mapManager == null) { Debug.LogError("UnitTokenSpawner: 未找到 MapManager"); return null; }
 
-            var tile = hexGrid.GetTile(spawnCoord);
+            var tile = mapManager.GetTile(spawnCoord);
             if (tile == null)
             {
-                tile = FindFirstAvailableTile(hexGrid);
+                tile = FindFirstAvailableTile(mapManager);
                 if (tile == null) { Debug.LogError("UnitTokenSpawner: 无可用地块"); return null; }
                 spawnCoord = tile.Coord;
             }
             if (tile.IsOccupied) { Debug.LogWarning($"UnitTokenSpawner: {spawnCoord} 已被占据"); return null; }
 
-            Vector3 worldPos = hexGrid.CoordToWorldPosition(spawnCoord);
+            Vector3 worldPos = mapManager.CoordToWorldPosition(spawnCoord);
             worldPos.y = tokenHeight;
 
             var unitsContainer = GameObject.Find("[Units]");
@@ -176,9 +181,9 @@ namespace TBS.UnitSystem
         }
 
 
-        MapTileCell FindFirstAvailableTile(MapTerrainGrid hexGrid)
+        MapTileCell FindFirstAvailableTile(MapManager manager)
         {
-            foreach (var tile in hexGrid.AllTiles)
+            foreach (var tile in manager.Tiles.Values)
                 if (!tile.IsOccupied) return tile;
             return null;
         }

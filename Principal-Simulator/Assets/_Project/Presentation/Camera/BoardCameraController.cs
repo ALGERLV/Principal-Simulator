@@ -1,6 +1,6 @@
 using System;
+using TBS.Map.Managers;
 using TBS.Map.Runtime;
-using TBS.Map.Components;
 using TBS.Map.Tools;
 using UnityEngine;
 using TBS.Core.Events;
@@ -16,7 +16,7 @@ namespace TBS.Presentation.Camera
         #region Serialized Fields
 
         [Header("目标设置")]
-        [SerializeField] private MapTerrainGrid targetGrid;
+        [SerializeField] private MapManager targetManager;
         [SerializeField] private Transform targetTransform;
 
         [Header("移动设置")]
@@ -174,10 +174,10 @@ namespace TBS.Presentation.Camera
         /// </summary>
         public void Initialize()
         {
-            // 如果没有指定目标网格，尝试自动查找
-            if (targetGrid == null)
+            // 如果没有指定目标管理器，尝试自动查找
+            if (targetManager == null)
             {
-                targetGrid = FindObjectOfType<MapTerrainGrid>();
+                targetManager = MapManager.Instance;
             }
 
             // 计算地图边界
@@ -206,11 +206,11 @@ namespace TBS.Presentation.Camera
         }
 
         /// <summary>
-        /// 设置目标网格
+        /// 设置目标管理器
         /// </summary>
-        public void SetTargetGrid(MapTerrainGrid grid)
+        public void SetTargetManager(MapManager manager)
         {
-            targetGrid = grid;
+            targetManager = manager;
             CalculateMapBounds();
         }
 
@@ -435,20 +435,20 @@ namespace TBS.Presentation.Camera
 
         private void CalculateMapBounds()
         {
-            if (targetGrid == null || !targetGrid.IsInitialized)
+            if (targetManager == null || targetManager.Tiles.Count == 0)
             {
                 mapWorldBounds = new Bounds(Vector3.zero, Vector3.zero);
                 return;
             }
 
             // 获取所有地块的世界位置
-            var tiles = targetGrid.GetAllTiles();
-            if (tiles.Length == 0) return;
+            var tiles = targetManager.Tiles;
+            if (tiles.Count == 0) return;
 
             Vector3 min = Vector3.one * float.MaxValue;
             Vector3 max = Vector3.one * float.MinValue;
 
-            foreach (var tile in tiles)
+            foreach (var tile in tiles.Values)
             {
                 if (tile == null) continue;
                 Vector3 pos = tile.transform.position;
@@ -468,9 +468,9 @@ namespace TBS.Presentation.Camera
         /// </summary>
         public void FocusOnCoord(MapHexCoord coord)
         {
-            if (targetGrid == null) return;
+            if (targetManager == null) return;
 
-            Vector3 worldPos = targetGrid.CoordToWorldPosition(coord);
+            Vector3 worldPos = targetManager.CoordToWorldPosition(coord);
             targetPosition = worldPos;
             targetTransform = null; // 清除跟随目标
         }
@@ -520,19 +520,19 @@ namespace TBS.Presentation.Camera
         /// </summary>
         public MapTileCell[] GetVisibleTiles()
         {
-            if (targetGrid == null) return new MapTileCell[0];
+            if (targetManager == null) return new MapTileCell[0];
 
             // 使用视锥体检测可见地块
-            var allTiles = targetGrid.GetAllTiles();
+            var allTiles = targetManager.Tiles;
             var visibleTiles = new System.Collections.Generic.List<MapTileCell>();
 
             Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(cam);
 
-            foreach (var tile in allTiles)
+            foreach (var tile in allTiles.Values)
             {
                 if (tile == null) continue;
 
-                Bounds bounds = new Bounds(tile.transform.position, Vector3.one * targetGrid.HexSize);
+                Bounds bounds = new Bounds(tile.transform.position, Vector3.one * targetManager.HexSize);
                 if (GeometryUtility.TestPlanesAABB(frustumPlanes, bounds))
                 {
                     visibleTiles.Add(tile);

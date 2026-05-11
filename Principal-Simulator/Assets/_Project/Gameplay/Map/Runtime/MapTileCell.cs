@@ -32,9 +32,12 @@ namespace TBS.Map.Runtime
 
         #region Serialized Fields
 
+        [Header("视觉组件")]
+        [SerializeField] private MeshRenderer meshRenderer;
+
         [SerializeField] private MapHexCoord coord;
         [SerializeField] private TerrainData terrainData;
-        [SerializeField, Tooltip("海拔等级，用于 Y 轴视觉抬高")]
+        [SerializeField, Tooltip("海拔等级，用于 Y 轴视觉抬高"), Range(-5, 10)]
         private int elevationLevel;
         [SerializeField, Range(0f, 1f), Tooltip("植被密度，供植被渲染器采样")]
         private float vegetationDensity = 0.35f;
@@ -55,7 +58,14 @@ namespace TBS.Map.Runtime
         public int ElevationLevel
         {
             get => elevationLevel;
-            set => elevationLevel = value;
+            set
+            {
+                if (elevationLevel != value)
+                {
+                    elevationLevel = value;
+                    RefreshVisuals();
+                }
+            }
         }
 
         public float VegetationDensity
@@ -116,9 +126,20 @@ namespace TBS.Map.Runtime
 
         void RefreshVisuals()
         {
-            // 通过 HexTileRenderer 刷新视觉表现
-            // 视觉刷新由 MapRenderer 统一处理，此处不再单独调用
-            // 如需局部刷新，可发送事件通知 MapRenderer
+            // 设置材质颜色
+            if (meshRenderer == null)
+                meshRenderer = GetComponent<MeshRenderer>();
+
+            if (meshRenderer != null && terrainData != null)
+            {
+                meshRenderer.material.color = terrainData.TerrainColor;
+            }
+
+            // 设置海拔高度（Y轴偏移）
+            float elevationY = elevationLevel * 0.06f; // ElevationWorldStep
+            Vector3 pos = transform.position;
+            pos.y = elevationY;
+            transform.position = pos;
         }
 
         private void OnValidate()

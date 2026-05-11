@@ -1,6 +1,5 @@
 using UnityEngine;
 using TBS.Map.Managers;
-using TBS.Map.Runtime;
 
 namespace TBS.Map.Editor
 {
@@ -42,21 +41,11 @@ namespace TBS.Map.Editor
                 manager = go.AddComponent<MapManager>();
             }
 
-            // 确保 MapTerrainGrid 存在
-            MapTerrainGrid grid = FindObjectOfType<MapTerrainGrid>();
-            if (grid == null)
-            {
-                Debug.Log("[MapTestBootstrap] 未找到 MapTerrainGrid，正在创建...");
-                GameObject go = new GameObject("MapTerrainGrid");
-                go.transform.SetParent(manager.transform);
-                grid = go.AddComponent<MapTerrainGrid>();
-            }
-
             // 强制初始化地图
             Debug.Log("[MapTestBootstrap] 开始初始化地图...");
             manager.InitializeMap();
 
-            Debug.Log($"[MapTestBootstrap] 地图初始化完成！共 {grid.TileCount} 个地块");
+            Debug.Log($"[MapTestBootstrap] 地图初始化完成！共 {manager.Tiles.Count} 个地块");
         }
     }
 }

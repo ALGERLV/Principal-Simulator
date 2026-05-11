@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using TBS.Map.Data;
+using TBS.Map.Managers;
 using TBS.Map.Runtime;
 using TBS.Map.Tools;
 using UnityEngine;
@@ -19,15 +20,15 @@ namespace TBS.Map.Rendering
         [SerializeField, Tooltip("每单位长度的分段数，越高越平滑")]
         private int segmentsPerUnit = 4;
 
-        private MapTerrainGrid currentGrid;
+        private MapManager currentManager;
         private Dictionary<MapLinkType, Mesh> linkMeshes = new Dictionary<MapLinkType, Mesh>();
         private List<(MapLinkType link, Mesh mesh, Material material)> activeLinks = new List<(MapLinkType, Mesh, Material)>();
 
         /// <summary>地图加载时由 MapManager 调用。</summary>
-        public void OnMapLoaded(MapRouteSetting routeSetting, MapTerrainGrid grid)
+        public void OnMapLoaded(MapRouteSetting routeSetting, MapManager manager)
         {
             if (routeSetting == null) return;
-            SetGrid(grid);
+            SetManager(manager);
             RebuildLinks(routeSetting);
         }
 
@@ -36,7 +37,7 @@ namespace TBS.Map.Rendering
         {
             ClearMeshes();
 
-            if (routeSetting == null || currentGrid == null) return;
+            if (routeSetting == null || currentManager == null) return;
 
             foreach (var link in routeSetting.Links)
             {
@@ -51,10 +52,10 @@ namespace TBS.Map.Rendering
             }
         }
 
-        /// <summary>设置当前网格引用（用于坐标转换）。</summary>
-        public void SetGrid(MapTerrainGrid grid)
+        /// <summary>设置当前管理器引用（用于坐标转换）。</summary>
+        public void SetManager(MapManager manager)
         {
-            currentGrid = grid;
+            currentManager = manager;
         }
 
         void OnDestroy()
@@ -85,19 +86,19 @@ namespace TBS.Map.Rendering
 
         Mesh CreateStripMesh(MapLinkType link)
         {
-            if (currentGrid == null) return null;
+            if (currentManager == null) return null;
 
-            MapTileCell fromTile = currentGrid.GetTile(link.From);
-            MapTileCell toTile = currentGrid.GetTile(link.To);
+            MapTileCell fromTile = currentManager.GetTile(link.From);
+            MapTileCell toTile = currentManager.GetTile(link.To);
 
             if (fromTile == null || toTile == null) return null;
 
-            Vector3 fromPos = currentGrid.CoordToWorldPosition(link.From);
-            Vector3 toPos = currentGrid.CoordToWorldPosition(link.To);
+            Vector3 fromPos = currentManager.CoordToWorldPosition(link.From);
+            Vector3 toPos = currentManager.CoordToWorldPosition(link.To);
 
             // 应用海拔偏移
-            fromPos.y += (fromTile?.ElevationLevel ?? 0) * MapTerrainGrid.ElevationWorldStep;
-            toPos.y += (toTile?.ElevationLevel ?? 0) * MapTerrainGrid.ElevationWorldStep;
+            fromPos.y += (fromTile?.ElevationLevel ?? 0) * MapManager.ElevationWorldStep;
+            toPos.y += (toTile?.ElevationLevel ?? 0) * MapManager.ElevationWorldStep;
 
             // 微量抬高确保在地块之上
             float zLift = 0.02f;

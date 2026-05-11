@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using TBS.Map.Tools;
-using TBS.Map.Runtime;
+using TBS.Map.Managers;
 using TBS.Map.API;
 using TBS.Core;
 
@@ -27,7 +27,7 @@ namespace TBS.UnitSystem
         private bool isSelected;
         private bool isMoving;
         private Color originalBorderColor;
-        private MapTerrainGrid hexGrid;
+        private MapManager mapManager;
 
         public System.Action<UnitToken> OnUnitSelected;
         public System.Action<UnitToken> OnUnitDeselected;
@@ -57,7 +57,9 @@ namespace TBS.UnitSystem
 
         void Start()
         {
-            hexGrid = FindObjectOfType<MapTerrainGrid>();
+            mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = FindObjectOfType<MapManager>();
             if (BorderRenderer != null)
                 originalBorderColor = BorderRenderer.material.color;
             EnsureClickable();
@@ -73,10 +75,11 @@ namespace TBS.UnitSystem
 
         public void InitializeOnTile(MapHexCoord coord)
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (mapManager == null) mapManager = MapManager.Instance;
+            if (mapManager == null) mapManager = FindObjectOfType<MapManager>();
             currentCoord = coord;
             SnapToCoord(coord);
-            hexGrid?.GetTile(coord)?.SetOccupyingUnit(this);
+            mapManager?.GetTile(coord)?.SetOccupyingUnit(this);
         }
 
         // ─── 移动 ─────────────────────────────────────────────────
@@ -84,12 +87,13 @@ namespace TBS.UnitSystem
         public void MoveTo(MapHexCoord targetCoord)
         {
             if (isMoving) return;
-            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (mapManager == null) mapManager = MapManager.Instance;
+            if (mapManager == null) mapManager = FindObjectOfType<MapManager>();
 
-            var targetTile = hexGrid?.GetTile(targetCoord);
+            var targetTile = mapManager?.GetTile(targetCoord);
             if (targetTile == null || !targetTile.CanEnter(this)) return;
 
-            hexGrid.GetTile(currentCoord)?.ClearOccupyingUnit();
+            mapManager.GetTile(currentCoord)?.ClearOccupyingUnit();
             targetTile.SetOccupyingUnit(this);
             StartCoroutine(SmoothMove(targetCoord));
         }
@@ -105,7 +109,7 @@ namespace TBS.UnitSystem
             Debug.Log($"[UnitToken] {UnitName} 开始移动到 {targetCoord}，游戏时间: {startGameHours:F1}小时");
 
             Vector3 startPos = transform.position;
-            Vector3 endPos   = hexGrid.CoordToWorldPosition(targetCoord);
+            Vector3 endPos   = mapManager.CoordToWorldPosition(targetCoord);
             endPos.y = startPos.y;
 
             float speed    = UnitLogic != null ? UnitLogic.EffectiveMoveSpeed : 25f;
@@ -142,21 +146,21 @@ namespace TBS.UnitSystem
         public bool CanMoveTo(MapHexCoord targetCoord)
         {
             if (isMoving) return false;
-            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
-            if (hexGrid == null) return false;
+            if (mapManager == null) mapManager = MapManager.Instance;
+            if (mapManager == null) return false;
             if (currentCoord.DistanceTo(targetCoord) != 1) return false;
-            var tile = hexGrid.GetTile(targetCoord);
+            var tile = mapManager.GetTile(targetCoord);
             return tile != null && tile.CanEnter(this);
         }
 
         public MapHexCoord[] GetValidMoveTargets()
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
-            if (hexGrid == null) return System.Array.Empty<MapHexCoord>();
+            if (mapManager == null) mapManager = MapManager.Instance;
+            if (mapManager == null) return System.Array.Empty<MapHexCoord>();
             var result = new System.Collections.Generic.List<MapHexCoord>();
             foreach (var n in currentCoord.GetNeighbors())
             {
-                var tile = hexGrid.GetTile(n);
+                var tile = mapManager.GetTile(n);
                 if (tile != null && tile.CanEnter(this)) result.Add(n);
             }
             return result.ToArray();
@@ -251,8 +255,8 @@ namespace TBS.UnitSystem
 
         void SnapToCoord(MapHexCoord coord)
         {
-            if (hexGrid == null) return;
-            Vector3 pos = hexGrid.CoordToWorldPosition(coord);
+            if (mapManager == null) return;
+            Vector3 pos = mapManager.CoordToWorldPosition(coord);
             pos.y = transform.position.y;
             transform.position = pos;
         }

@@ -1,6 +1,6 @@
 using UnityEngine;
 using TBS.Map.Tools;
-using TBS.Map.Runtime;
+using TBS.Map.Managers;
 
 namespace TBS.UnitSystem
 {
@@ -21,12 +21,14 @@ namespace TBS.UnitSystem
         [SerializeField] private bool autoFindCenter = true;
 
         private UnitTokenSpawner spawner;
-        private MapTerrainGrid hexGrid;
+        private MapManager mapManager;
         private bool spawned;
 
         void Start()
         {
-            hexGrid = FindObjectOfType<MapTerrainGrid>();
+            mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = FindObjectOfType<MapManager>();
             spawner = FindObjectOfType<UnitTokenSpawner>();
 
             // 若场景中没有 Spawner，动态添加一个
@@ -46,18 +48,18 @@ namespace TBS.UnitSystem
 
         void SpawnTestUnit()
         {
-            if (hexGrid == null) hexGrid = FindObjectOfType<MapTerrainGrid>();
-            if (hexGrid == null)
+            if (mapManager == null) mapManager = MapManager.Instance;
+            if (mapManager == null)
             {
-                Debug.LogError("TestSpawnController: 场景中没有 MapTerrainGrid");
+                Debug.LogError("TestSpawnController: 场景中没有 MapManager");
                 return;
             }
 
             MapHexCoord coord = spawnCoord;
 
-            if (autoFindCenter || !hexGrid.HasTile(coord))
+            if (autoFindCenter || mapManager.GetTile(coord) == null)
             {
-                coord = FindNearCenter(hexGrid);
+                coord = FindNearCenter(mapManager);
             }
 
             var token = spawner.SpawnUnit(coord);
@@ -69,19 +71,20 @@ namespace TBS.UnitSystem
             }
         }
 
-        static MapHexCoord FindNearCenter(MapTerrainGrid grid)
+        static MapHexCoord FindNearCenter(MapManager manager)
         {
-            int cx = grid.Width  / 2;
-            int cy = grid.Height / 2;
+            // 从地图中心附近开始搜索
+            int cx = 0;
+            int cy = 0;
 
             // 从中心向外螺旋搜索第一个空闲格
-            for (int r = 0; r <= Mathf.Max(grid.Width, grid.Height); r++)
+            for (int r = 0; r <= 50; r++)
             {
                 var coord = new MapHexCoord(cx, cy);
                 var spiral = coord.GetSpiral(r);
                 foreach (var c in spiral)
                 {
-                    var tile = grid.GetTile(c);
+                    var tile = manager.GetTile(c);
                     if (tile != null && !tile.IsOccupied)
                         return c;
                 }

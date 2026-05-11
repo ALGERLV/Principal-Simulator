@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TBS.Map.Managers;
 using TBS.Map.Runtime;
 using TBS.Map.Tools;
 using UnityEngine;
@@ -25,10 +26,12 @@ namespace TBS.Map.Rendering
         private float lodDistance = 30f;
 
         [Header("尺寸随机")]
-        [SerializeField] private float minScale = 0.8f;
-        [SerializeField] private float maxScale = 1.2f;
+        [SerializeField] private float minScale = 0.3f;
+        [SerializeField] private float maxScale = 0.6f;
+        [SerializeField, Tooltip("高度缩放因子，用于压扁植被")] 
+        private float heightScale = 0.3f;
 
-        private MapTerrainGrid currentGrid;
+        private MapManager currentManager;
         private Camera mainCamera;
 
         // 实例数据缓冲区
@@ -44,9 +47,9 @@ namespace TBS.Map.Rendering
         };
 
         /// <summary>地图加载时由 MapManager 调用。</summary>
-        public void OnMapLoaded(MapTerrainGrid grid)
+        public void OnMapLoaded(MapManager manager)
         {
-            currentGrid = grid;
+            currentManager = manager;
             mainCamera = Camera.main;
         }
 
@@ -58,7 +61,7 @@ namespace TBS.Map.Rendering
 
         void Update()
         {
-            if (currentGrid == null || mainCamera == null) return;
+            if (currentManager == null || mainCamera == null) return;
             if (vegetationMesh == null || vegetationMaterial == null) return;
 
             // 获取相机位置
@@ -69,7 +72,7 @@ namespace TBS.Map.Rendering
             instanceColors.Clear();
 
             // 遍历所有地块，收集可见且需要植被的实例
-            foreach (var tile in currentGrid.AllTiles)
+            foreach (var tile in currentManager.Tiles.Values)
             {
                 if (tile == null) continue;
 
@@ -77,7 +80,7 @@ namespace TBS.Map.Rendering
                 float density = tile.VegetationDensity;
                 if (density <= 0.01f) continue;
 
-                Vector3 tileCenter = currentGrid.CoordToWorldPosition(tile.Coord);
+                Vector3 tileCenter = currentManager.CoordToWorldPosition(tile.Coord);
 
                 // 距离检查
                 float distance = Vector3.Distance(cameraPos, tileCenter);
@@ -103,8 +106,8 @@ namespace TBS.Map.Rendering
 
         void GenerateTileVegetation(MapTileCell tile, Vector3 tileCenter, int count)
         {
-            float hexSize = currentGrid.HexSize * 0.4f; // 在地块内随机分布
-            float elevationOffset = tile.ElevationLevel * MapTerrainGrid.ElevationWorldStep;
+            float hexSize = currentManager.HexSize * 0.4f; // 在地块内随机分布
+            float elevationOffset = tile.ElevationLevel * MapManager.ElevationWorldStep;
 
             // 使用固定的随机种子确保同一地块生成的植被位置稳定
             int seed = tile.Coord.Q * 10000 + tile.Coord.R;
@@ -127,9 +130,9 @@ namespace TBS.Map.Rendering
                 // 随机旋转（Y轴）
                 Quaternion rotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
 
-                // 随机缩放
+                // 随机缩放（Y轴使用heightScale压扁，使植被更矮）
                 float scale = Random.Range(minScale, maxScale);
-                Vector3 scaleVec = new Vector3(scale, scale, scale);
+                Vector3 scaleVec = new Vector3(scale, scale * heightScale, scale);
 
                 // 构建变换矩阵
                 Matrix4x4 matrix = Matrix4x4.TRS(position, rotation, scaleVec);

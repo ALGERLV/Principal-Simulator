@@ -36,5 +36,33 @@ namespace TBS.Map.Data
         [SerializeField] private List<MapLinkType> links = new List<MapLinkType>();
 
         public IReadOnlyList<MapLinkType> Links => links;
+
+        /// <summary>
+        /// 添加连接（运行时动态构建配置用）
+        /// </summary>
+        public void AddLink(MapLinkType link)
+        {
+            if (links == null)
+                links = new List<MapLinkType>();
+            links.Add(link);
+        }
+
+        /// <summary>
+        /// 添加多个连接
+        /// </summary>
+        public void AddLinks(IEnumerable<MapLinkType> newLinks)
+        {
+            if (links == null)
+                links = new List<MapLinkType>();
+            links.AddRange(newLinks);
+        }
+
+        /// <summary>
+        /// 清空所有连接
+        /// </summary>
+        public void ClearLinks()
+        {
+            links?.Clear();
+        }
     }
 }

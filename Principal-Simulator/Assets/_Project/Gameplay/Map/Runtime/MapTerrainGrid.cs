@@ -304,7 +304,7 @@ namespace TBS.Map.Runtime
                 tile = tileObject.AddComponent<MapTileCell>();
             }
 
-            // 选择地形
+            // 选择地形（优先使用传入的地形，否则根据配置随机选择）
             TerrainData selectedTerrain = terrain;
             if (selectedTerrain == null && randomTerrains != null && randomTerrains.Length > 0)
             {
@@ -367,32 +367,78 @@ namespace TBS.Map.Runtime
             return go;
         }
 
-        /// <summary>创建六边形网格（pointy-top 正六边形）。</summary>
+        /// <summary>创建带厚度的六边形网格（pointy-top 正六边形）。</summary>
         private Mesh CreateHexMesh()
         {
             Mesh mesh = new Mesh();
-            mesh.name = "HexTile";
+            mesh.name = "HexTile_Thick";
 
-            float size = hexSize;
-            float w = size * 0.8660254f; // 宽度 = cos(30°) * size = sqrt(3)/2 * size
+            // 使用内切圆半径（apothem）作为六边形的"大小"基准
+            float a = hexSize; // 内切圆半径 = 中心到边的距离
+            float r = a * 2f / Mathf.Sqrt(3); // 外接圆半径 = 中心到顶点的距离
+            float w = a; // 半边宽 = 内切圆半径
+            float thickness = 0.2f; // 地块厚度（世界单位）
 
-            Vector3[] vertices = new Vector3[7];
-            vertices[0] = new Vector3(0, 0, 0);      // 中心 [0]
-            vertices[1] = new Vector3(0, 0, size);   // 顶部 (0, 1) [1]
-            vertices[2] = new Vector3(w, 0, size * 0.5f);  // 右上 (0.866, 0.5) [2]
-            vertices[3] = new Vector3(w, 0, -size * 0.5f); // 右下 (0.866, -0.5) [3]
-            vertices[4] = new Vector3(0, 0, -size);  // 底部 (0, -1) [4]
-            vertices[5] = new Vector3(-w, 0, -size * 0.5f); // 左下 (-0.866, -0.5) [5]
-            vertices[6] = new Vector3(-w, 0, size * 0.5f); // 左上 (-0.866, 0.5) [6]
+            // 14个顶点：上面7个 + 下面7个（中心+6个角）
+            Vector3[] vertices = new Vector3[14];
+            
+            // 上面（Y = thickness/2）
+            vertices[0] = new Vector3(0, thickness/2, 0);           // 中心 [0]
+            vertices[1] = new Vector3(0, thickness/2, r);          // 顶部 [1]
+            vertices[2] = new Vector3(w, thickness/2, r * 0.5f);   // 右上 [2]
+            vertices[3] = new Vector3(w, thickness/2, -r * 0.5f); // 右下 [3]
+            vertices[4] = new Vector3(0, thickness/2, -r);        // 底部 [4]
+            vertices[5] = new Vector3(-w, thickness/2, -r * 0.5f); // 左下 [5]
+            vertices[6] = new Vector3(-w, thickness/2, r * 0.5f);  // 左上 [6]
+            
+            // 下面（Y = -thickness/2）
+            vertices[7] = new Vector3(0, -thickness/2, 0);          // 中心 [7]
+            vertices[8] = new Vector3(0, -thickness/2, r);          // 顶部 [8]
+            vertices[9] = new Vector3(w, -thickness/2, r * 0.5f);   // 右上 [9]
+            vertices[10] = new Vector3(w, -thickness/2, -r * 0.5f);// 右下 [10]
+            vertices[11] = new Vector3(0, -thickness/2, -r);       // 底部 [11]
+            vertices[12] = new Vector3(-w, -thickness/2, -r * 0.5f);// 左下 [12]
+            vertices[13] = new Vector3(-w, -thickness/2, r * 0.5f); // 左上 [13]
 
-            // 6个三角形：中心-当前-下一个
-            int[] triangles = new int[18];
-            triangles[0]  = 0; triangles[1]  = 1; triangles[2]  = 2;  // 中心-顶-右上
-            triangles[3]  = 0; triangles[4]  = 2; triangles[5]  = 3;  // 中心-右上-右下
-            triangles[6]  = 0; triangles[7]  = 3; triangles[8]  = 4;  // 中心-右下-底
-            triangles[9]  = 0; triangles[10] = 4; triangles[11] = 5;  // 中心-底-左下
-            triangles[12] = 0; triangles[13] = 5; triangles[14] = 6;  // 中心-左下-左上
-            triangles[15] = 0; triangles[16] = 6; triangles[17] = 1;  // 中心-左上-顶
+            // 三角形索引：上面6个 + 下面6个 + 侧面6个边
+            int[] triangles = new int[144];
+            int triIdx = 0;
+            
+            // 上面（顺时针）
+            triangles[triIdx++] = 0; triangles[triIdx++] = 1; triangles[triIdx++] = 2;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 2; triangles[triIdx++] = 3;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 3; triangles[triIdx++] = 4;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 4; triangles[triIdx++] = 5;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 5; triangles[triIdx++] = 6;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 6; triangles[triIdx++] = 1;
+            
+            // 下面（逆时针，从下面看是正面）
+            triangles[triIdx++] = 7; triangles[triIdx++] = 9; triangles[triIdx++] = 8;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 10; triangles[triIdx++] = 9;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 11; triangles[triIdx++] = 10;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 12; triangles[triIdx++] = 11;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 13; triangles[triIdx++] = 12;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 8; triangles[triIdx++] = 13;
+            
+            // 侧面6个矩形（每个分成2个三角形）
+            // 边1: 顶-右上 (1-2 -> 8-9)
+            triangles[triIdx++] = 1; triangles[triIdx++] = 8; triangles[triIdx++] = 9;
+            triangles[triIdx++] = 1; triangles[triIdx++] = 9; triangles[triIdx++] = 2;
+            // 边2: 右上-右下 (2-3 -> 9-10)
+            triangles[triIdx++] = 2; triangles[triIdx++] = 9; triangles[triIdx++] = 10;
+            triangles[triIdx++] = 2; triangles[triIdx++] = 10; triangles[triIdx++] = 3;
+            // 边3: 右下-底部 (3-4 -> 10-11)
+            triangles[triIdx++] = 3; triangles[triIdx++] = 10; triangles[triIdx++] = 11;
+            triangles[triIdx++] = 3; triangles[triIdx++] = 11; triangles[triIdx++] = 4;
+            // 边4: 底部-左下 (4-5 -> 11-12)
+            triangles[triIdx++] = 4; triangles[triIdx++] = 11; triangles[triIdx++] = 12;
+            triangles[triIdx++] = 4; triangles[triIdx++] = 12; triangles[triIdx++] = 5;
+            // 边5: 左下-左上 (5-6 -> 12-13)
+            triangles[triIdx++] = 5; triangles[triIdx++] = 12; triangles[triIdx++] = 13;
+            triangles[triIdx++] = 5; triangles[triIdx++] = 13; triangles[triIdx++] = 6;
+            // 边6: 左上-顶 (6-1 -> 13-8)
+            triangles[triIdx++] = 6; triangles[triIdx++] = 13; triangles[triIdx++] = 8;
+            triangles[triIdx++] = 6; triangles[triIdx++] = 8; triangles[triIdx++] = 1;
 
             mesh.vertices = vertices;
             mesh.triangles = triangles;

@@ -1,4 +1,4 @@
-using TBS.Map.Runtime;
+using TBS.Map.Managers;
 using TBS.Presentation.Camera;
 using UnityEditor;
 using UnityEngine;
@@ -10,7 +10,7 @@ namespace TBS.Editor
     /// </summary>
     public class CameraSetupEditor : EditorWindow
     {
-        private MapTerrainGrid targetGrid;
+        private MapManager targetManager;
         private BoardCameraConfig cameraConfig;
         private bool createNewCamera = true;
         private bool showAdvancedOptions = false;
@@ -27,19 +27,19 @@ namespace TBS.Editor
             EditorGUILayout.LabelField("棋盘相机设置工具", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
 
-            // 目标网格选择
-            targetGrid = EditorGUILayout.ObjectField(
-                "目标网格 (MapTerrainGrid)",
-                targetGrid,
-                typeof(MapTerrainGrid),
+            // 目标管理器选择
+            targetManager = EditorGUILayout.ObjectField(
+                "目标管理器 (MapManager)",
+                targetManager,
+                typeof(MapManager),
                 true
-            ) as MapTerrainGrid;
+            ) as MapManager;
 
-            // 自动查找网格
-            if (targetGrid == null)
+            // 自动查找管理器
+            if (targetManager == null)
             {
                 EditorGUILayout.HelpBox(
-                    "未指定目标网格，将自动查找场景中的 MapTerrainGrid 组件",
+                    "未指定目标管理器，将自动查找场景中的 MapManager 组件",
                     MessageType.Info
                 );
             }
@@ -113,27 +113,29 @@ namespace TBS.Editor
 
         private void SetupCamera()
         {
-            // 自动查找网格
-            if (targetGrid == null)
+            // 自动查找管理器
+            if (targetManager == null)
             {
-                targetGrid = UnityEngine.Object.FindObjectOfType<MapTerrainGrid>();
+                targetManager = MapManager.Instance;
+                if (targetManager == null)
+                    targetManager = UnityEngine.Object.FindObjectOfType<MapManager>();
             }
 
             BoardCameraController controller;
 
             if (cameraConfig != null)
             {
-                controller = BoardCameraSetup.CreateBoardCameraWithConfig(cameraConfig, targetGrid);
+                controller = BoardCameraSetup.CreateBoardCameraWithConfig(cameraConfig, targetManager);
             }
             else
             {
                 if (createNewCamera || UnityEngine.Camera.main == null)
                 {
-                    controller = BoardCameraSetup.CreateBoardCamera(targetGrid);
+                    controller = BoardCameraSetup.CreateBoardCamera(targetManager);
                 }
                 else
                 {
-                    controller = BoardCameraSetup.ConvertExistingCamera(UnityEngine.Camera.main, targetGrid);
+                    controller = BoardCameraSetup.ConvertExistingCamera(UnityEngine.Camera.main, targetManager);
                 }
             }
 
@@ -206,8 +208,10 @@ namespace TBS.Editor
         [MenuItem("GameObject/TBS/Camera/Board Camera", false, 10)]
         public static void CreateBoardCamera(MenuCommand menuCommand)
         {
-            var grid = UnityEngine.Object.FindObjectOfType<MapTerrainGrid>();
-            var controller = BoardCameraSetup.CreateBoardCamera(grid);
+            var manager = MapManager.Instance;
+            if (manager == null)
+                manager = UnityEngine.Object.FindObjectOfType<MapManager>();
+            var controller = BoardCameraSetup.CreateBoardCamera(manager);
 
             if (controller != null)
             {

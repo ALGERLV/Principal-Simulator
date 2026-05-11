@@ -1,5 +1,4 @@
 using TBS.Map.Runtime;
-using TBS.Map.Tools;
 using UnityEngine;
 
 using TerrainData = TBS.Map.Data.TerrainData;
@@ -17,7 +16,7 @@ namespace TBS.Map.Data
         [SerializeField] private int mapHeight = 15;
         [SerializeField] private float hexSize = 1f;
         [SerializeField] private HexOrientation orientation = HexOrientation.PointyTop;
-        [SerializeField] private GridShape gridShape = GridShape.Hexagon;
+        [SerializeField] private TBS.Map.Runtime.GridShape gridShape = TBS.Map.Runtime.GridShape.Hexagon;
 
         [Header("地形")]
         [SerializeField] private TerrainData defaultTerrain;
@@ -26,7 +25,7 @@ namespace TBS.Map.Data
         public int MapHeight => mapHeight;
         public float HexSize => hexSize;
         public HexOrientation Orientation => orientation;
-        public GridShape GridShape => gridShape;
+        public TBS.Map.Runtime.GridShape GridShape => gridShape;
         public TerrainData DefaultTerrain => defaultTerrain;
     }
 }

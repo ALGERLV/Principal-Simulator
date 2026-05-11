@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
-using TBS.Map.Tools;
 using TBS.Map.Runtime;
+using TBS.Map.Tools;
+using TBS.Map.Managers;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
 
@@ -13,7 +14,7 @@ namespace TBS.UnitSystem
     public class UnitSelectionManager : MonoBehaviour
     {
         [Header("引用")]
-        public MapTerrainGrid hexGrid;
+        public MapManager mapManager;
         public Camera gameCamera;
 
         [Header("高亮设置")]
@@ -37,8 +38,10 @@ namespace TBS.UnitSystem
         void Start()
         {
             // 获取引用
-            if (hexGrid == null)
-                hexGrid = FindObjectOfType<MapTerrainGrid>();
+            if (mapManager == null)
+                mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = FindObjectOfType<MapManager>();
             if (gameCamera == null)
                 gameCamera = Camera.main;
 
@@ -183,7 +186,7 @@ namespace TBS.UnitSystem
         /// </summary>
         void ShowValidMoveHighlights()
         {
-            if (selectedUnit == null || hexGrid == null) return;
+            if (selectedUnit == null || mapManager == null) return;
 
             // 清除旧高亮
             ClearHighlights();
@@ -203,7 +206,7 @@ namespace TBS.UnitSystem
         /// </summary>
         void CreateHighlight(MapHexCoord coord)
         {
-            Vector3 worldPos = hexGrid.CoordToWorldPosition(coord);
+            Vector3 worldPos = mapManager.CoordToWorldPosition(coord);
             worldPos.y += highlightHeight;
 
             GameObject highlight;
@@ -293,7 +296,7 @@ namespace TBS.UnitSystem
         {
             coord = default;
             
-            if (gameCamera == null || hexGrid == null) return false;
+            if (gameCamera == null || mapManager == null) return false;
 
             Ray ray = gameCamera.ScreenPointToRay(screenPos);
             RaycastHit hit;

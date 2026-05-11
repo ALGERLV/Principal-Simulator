@@ -1,8 +1,9 @@
 using UnityEngine;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
-using TBS.Map.Tools;
 using TBS.Map.Runtime;
+using TBS.Map.Tools;
+using TBS.Map.Managers;
 using TBS.Presentation.UI;
 
 namespace TBS.Presentation.UI.Panels.SpawnPanel
@@ -10,20 +11,22 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
     public class SpawnPanelPresenter : BasePresenter<SpawnPanelView, SpawnPanelViewModel>
     {
         private UnityEngine.Camera gameCamera;
-        private MapTerrainGrid hexGrid;
+        private MapManager mapManager;
 
         protected override void OnInitialize()
         {
             Debug.Log("[SpawnPanelPresenter] OnInitialize");
 
-            // 获取摄像机和地网格
+            // 获取摄像机和地图管理器
             gameCamera = UnityEngine.Camera.main;
-            hexGrid = Object.FindObjectOfType<MapTerrainGrid>();
+            mapManager = MapManager.Instance;
+            if (mapManager == null)
+                mapManager = Object.FindObjectOfType<MapManager>();
 
             // 订阅鼠标点击事件
             EventBus.On<MouseButtonDownEvent>(OnMouseButtonDown);
 
-            Debug.Log($"[SpawnPanelPresenter] 初始化完成，Camera: {(gameCamera != null ? "有" : "无")}, MapTerrainGrid: {(hexGrid != null ? "有" : "无")}");
+            Debug.Log($"[SpawnPanelPresenter] 初始化完成，Camera: {(gameCamera != null ? "有" : "无")}, MapManager: {(mapManager != null ? "有" : "无")}");
         }
 
         private void OnMouseButtonDown(MouseButtonDownEvent evt)
@@ -48,12 +51,14 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
             Ray ray = gameCamera.ScreenPointToRay(evt.ScreenPos);
             RaycastHit hit;
 
-            if (hexGrid == null)
+            if (mapManager == null)
             {
-                hexGrid = Object.FindObjectOfType<MapTerrainGrid>();
-                if (hexGrid == null)
+                mapManager = MapManager.Instance;
+                if (mapManager == null)
+                    mapManager = Object.FindObjectOfType<MapManager>();
+                if (mapManager == null)
                 {
-                    Debug.LogError("[SpawnPanelPresenter] HexGrid为空");
+                    Debug.LogError("[SpawnPanelPresenter] MapManager为空");
                     return;
                 }
             }

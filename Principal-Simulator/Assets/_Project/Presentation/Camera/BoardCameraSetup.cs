@@ -1,4 +1,4 @@
-using TBS.Map.Runtime;
+using TBS.Map.Managers;
 using UnityEngine;
 
 namespace TBS.Presentation.Camera
@@ -11,9 +11,9 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 在场景中创建标准棋盘相机
         /// </summary>
-        /// <param name="targetGrid">目标六边形网格</param>
+        /// <param name="targetManager">目标地图管理器</param>
         /// <returns>创建的相机控制器</returns>
-        public static BoardCameraController CreateBoardCamera(MapTerrainGrid targetGrid = null)
+        public static BoardCameraController CreateBoardCamera(MapManager targetManager = null)
         {
             // 查找或创建相机对象
             UnityEngine.Camera cam = UnityEngine.Camera.main;
@@ -46,10 +46,10 @@ namespace TBS.Presentation.Camera
 
             // 添加相机控制器
             var controller = cameraObj.AddComponent<BoardCameraController>();
-            controller.SetTargetGrid(targetGrid);
+            controller.SetTargetManager(targetManager);
 
             // 设置初始位置
-            if (targetGrid != null && targetGrid.IsInitialized)
+            if (targetManager != null && targetManager.Tiles.Count > 0)
             {
                 controller.Initialize();
             }
@@ -70,9 +70,9 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 创建带预设配置的相机
         /// </summary>
-        public static BoardCameraController CreateBoardCameraWithConfig(BoardCameraConfig config, MapTerrainGrid targetGrid = null)
+        public static BoardCameraController CreateBoardCameraWithConfig(BoardCameraConfig config, MapManager targetManager = null)
         {
-            var controller = CreateBoardCamera(targetGrid);
+            var controller = CreateBoardCamera(targetManager);
 
             if (config != null)
             {
@@ -86,7 +86,7 @@ namespace TBS.Presentation.Camera
         /// <summary>
         /// 将现有相机转换为棋盘相机
         /// </summary>
-        public static BoardCameraController ConvertExistingCamera(UnityEngine.Camera camera, MapTerrainGrid targetGrid = null)
+        public static BoardCameraController ConvertExistingCamera(UnityEngine.Camera camera, MapManager targetManager = null)
         {
             if (camera == null)
             {
@@ -103,7 +103,7 @@ namespace TBS.Presentation.Camera
 
             // 添加控制器
             var controller = camera.gameObject.AddComponent<BoardCameraController>();
-            controller.SetTargetGrid(targetGrid);
+            controller.SetTargetManager(targetManager);
             controller.Initialize();
 
             Debug.Log($"[BoardCameraSetup] 相机已转换: {camera.name}");

@@ -36,9 +36,9 @@ namespace TBS.Presentation.Camera
                 }
             }
 
-            // 设置相机基本参数
-            cam.orthographic = false;
-            cam.fieldOfView = 60f;
+            // 设置相机基本参数（使用正交模式避免六边形视觉拉伸）
+            cam.orthographic = true;
+            cam.orthographicSize = 8f; // 正交相机视野大小
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 1000f;
             cam.clearFlags = CameraClearFlags.SolidColor;

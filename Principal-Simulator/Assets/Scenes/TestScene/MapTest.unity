@@ -377,7 +377,7 @@ MonoBehaviour:
   randomTerrains:
   - {fileID: 11400000, guid: 78e41d8ab3a24169b52074a2a4e557b1, type: 2}
   - {fileID: 11400000, guid: 9062706d4ab0410b84fbd66066edf5ae, type: 2}
-  randomChance: 0.308
+  randomChance: 0.629
   defaultTerrain: {fileID: 11400000, guid: b0162a82b76844b9a5a46126f09b4aa2, type: 2}
   riverMaterial: {fileID: 2100000, guid: 82d38b0b8592c6f42bda62841db56f02, type: 2}
   riverMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}

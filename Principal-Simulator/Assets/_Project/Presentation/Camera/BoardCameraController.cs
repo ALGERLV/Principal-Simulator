@@ -38,17 +38,17 @@ namespace TBS.Presentation.Camera
 
         [Header("旋转设置")]
         [SerializeField] private float rotationSpeed = 100f;
-        [SerializeField] private float minPitchAngle = 30f;
-        [SerializeField] private float maxPitchAngle = 85f;
+        [SerializeField] private float minPitchAngle = 80f;  // 限制最小俯仰角，保持接近垂直俯视
+        [SerializeField] private float maxPitchAngle = 90f; // 最大90度（垂直俯视）
 
         [Header("边界限制")]
         [SerializeField] private bool limitToMapBounds = true;
         [SerializeField] private Vector2 mapPadding = new Vector2(2f, 2f);
 
         [Header("初始视角")]
-        [SerializeField] private float initialPitch = 60f;
+        [SerializeField] private float initialPitch = 90f; // 垂直俯视，确保六边形显示为正六边形
         [SerializeField] private float initialYaw = 0f;
-        [SerializeField] private float initialZoom = 0.5f; // 0-1 表示最小和最大之间
+        [SerializeField] private float initialZoom = 0.3f; // 0-1 表示最小和最大之间（正交模式下控制orthographicSize）
 
         #endregion
 
@@ -368,38 +368,56 @@ namespace TBS.Presentation.Camera
         #region Camera Position Update
 
         private void UpdateCameraPosition()
-            {
+        {
             // 如果有目标跟随对象，更新目标位置
             if (targetTransform != null)
             {
                 targetPosition = targetTransform.position;
             }
 
-            // 计算相机位置（球坐标系）
-            // currentZoomLevel 现在表示相机到目标点的直线距离（半径）
-            // 这样改变俯仰角时，相机与目标的距离保持不变，只是角度变化
-            float pitchRad = currentPitch * Mathf.Deg2Rad;
-            float yawRad = currentYaw * Mathf.Deg2Rad;
+            // 根据相机投影类型选择不同的位置计算方式
+            if (cam != null && cam.orthographic)
+            {
+                // 正交相机：相机始终垂直俯视（或固定角度），只调整位置
+                // 正交大小由 orthographicSize 控制
+                cam.orthographicSize = currentZoomLevel;
 
-            // 半径（相机到目标点的直线距离）
-            float radius = currentZoomLevel;
+                // 计算相机位置（保持俯仰角和水平旋转）
+                float pitchRad = currentPitch * Mathf.Deg2Rad;
+                float yawRad = currentYaw * Mathf.Deg2Rad;
 
-            // 球坐标转换为直角坐标
-            // pitch: 从正上方开始的角度（0°=正上方，90°=水平）
-            // yaw: 水平旋转角度
-            Vector3 offset = new Vector3(
-                radius * Mathf.Sin(pitchRad) * Mathf.Sin(yawRad),
-                radius * Mathf.Cos(pitchRad),
-                radius * Mathf.Sin(pitchRad) * Mathf.Cos(yawRad)
-            );
+                // 固定相机高度，根据俯仰角和旋转计算位置
+                float height = 20f; // 固定高度
+                Vector3 offset = new Vector3(
+                    height * Mathf.Sin(pitchRad) * Mathf.Sin(yawRad),
+                    height * Mathf.Cos(pitchRad),
+                    height * Mathf.Sin(pitchRad) * Mathf.Cos(yawRad)
+                );
 
-            Vector3 desiredPosition = targetPosition + offset;
+                Vector3 desiredPosition = targetPosition + offset;
+                transform.position = Vector3.Lerp(transform.position, desiredPosition, zoomSmoothness * Time.deltaTime);
+                transform.LookAt(targetPosition);
+            }
+            else
+            {
+                // 透视相机：使用球坐标系
+                float pitchRad = currentPitch * Mathf.Deg2Rad;
+                float yawRad = currentYaw * Mathf.Deg2Rad;
 
-            // 平滑移动
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, zoomSmoothness * Time.deltaTime);
+                // 半径（相机到目标点的直线距离）
+                float radius = currentZoomLevel;
 
-            // 看向目标点（稍微向上偏移一点，使目标在画面中心偏下位置）
-            transform.LookAt(targetPosition + Vector3.up * 0.5f);
+                // 球坐标转换为直角坐标
+                Vector3 offset = new Vector3(
+                    radius * Mathf.Sin(pitchRad) * Mathf.Sin(yawRad),
+                    radius * Mathf.Cos(pitchRad),
+                    radius * Mathf.Sin(pitchRad) * Mathf.Cos(yawRad)
+                );
+
+                Vector3 desiredPosition = targetPosition + offset;
+                transform.position = Vector3.Lerp(transform.position, desiredPosition, zoomSmoothness * Time.deltaTime);
+                transform.LookAt(targetPosition + Vector3.up * 0.5f);
+            }
         }
 
         private float GetCameraHeight()

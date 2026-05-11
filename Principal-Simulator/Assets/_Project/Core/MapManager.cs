@@ -166,6 +166,13 @@ namespace TBS.Map.Managers
                 baseTerrain = defaultTerrain;
             }
 
+            // 输出配置信息
+            Debug.Log($"[MapManager] 地图配置: 宽{width}高{height}, " +
+                      $"随机地形数量: {(randomTerrains?.Length ?? 0)}, " +
+                      $"随机概率: {randomChance:P0}, " +
+                      $"基础地形: {baseTerrain?.TerrainName ?? "null"}, " +
+                      $"默认地形: {defaultTerrain?.TerrainName ?? "null"}");
+
             // 生成网格
             GenerateGrid(width, height, shape, baseTerrain);
 
@@ -270,19 +277,139 @@ namespace TBS.Map.Managers
             Vector3 worldPos = CoordToWorldPosition(coord);
             tileObject.transform.position = worldPos;
 
-            // 获取或添加 MapTileCell
+            // 获取或添加 MapTileCell（在父对象上）
             var tile = tileObject.GetComponent<MapTileCell>();
             if (tile == null)
                 tile = tileObject.AddComponent<MapTileCell>();
 
             // 确定地形
             TerrainData terrain = SelectTerrain(baseTerrain);
+            Debug.Log($"[MapManager] CreateTile: 为 {coord} 选择地形: {terrain?.TerrainName ?? "null"}");
 
-            // 初始化
+            // 初始化（传递Hex子对象给MapTileCell用于设置视觉）
             tile.Initialize(coord, terrain);
+
+            // 找到Hex子对象并设置mesh和材质颜色
+            Transform hexTransform = tileObject.transform.Find("Hex");
+            if (hexTransform != null)
+            {
+                // 确保 scale 是统一缩放，防止拉伸
+                hexTransform.localScale = Vector3.one;
+
+                // 设置正确大小的mesh（避免重叠闪烁）
+                var hexFilter = hexTransform.GetComponent<MeshFilter>();
+                if (hexFilter != null)
+                {
+                    hexFilter.mesh = CreateHexMeshForTile();
+                }
+
+                // 设置材质颜色
+                var hexRenderer = hexTransform.GetComponent<MeshRenderer>();
+                if (hexRenderer != null && terrain != null)
+                {
+                    hexRenderer.material = new Material(hexRenderer.sharedMaterial);
+                    hexRenderer.material.color = terrain.TerrainColor;
+                    Debug.Log($"[MapManager] 在Hex子对象上设置mesh和颜色: {coord} -> {terrain.TerrainColor}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[MapManager] Hex子对象缺少MeshRenderer或terrain为null");
+                }
+
+                // 同步更新collider的mesh
+                var hexCollider = hexTransform.GetComponent<MeshCollider>();
+                if (hexCollider != null && hexFilter != null)
+                {
+                    hexCollider.sharedMesh = hexFilter.mesh;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[MapManager] 找不到Hex子对象，无法设置颜色和mesh");
+            }
 
             tiles[coord] = tile;
             return tile;
+        }
+
+        /// <summary>创建适合当前hexSize的六边形mesh（带缝隙避免重叠）。</summary>
+        Mesh CreateHexMeshForTile()
+        {
+            Mesh mesh = new Mesh();
+            mesh.name = "HexTile_Runtime";
+
+            // 使用外接圆半径作为六边形大小基准
+            float r = hexSize; // 外接圆半径
+            float a = r * Mathf.Sqrt(3) / 2f; // 内切圆半径
+            float w = a; // 半边宽
+            float thickness = 0.2f;
+            
+            // 缩放因子：生成比理论尺寸略小的 mesh，留出缝隙避免重叠闪烁
+            float scaleFactor = 0.95f;
+            r *= scaleFactor;
+            w *= scaleFactor;
+
+            // 14个顶点
+            Vector3[] vertices = new Vector3[14];
+            
+            // 上面
+            vertices[0] = new Vector3(0, thickness/2, 0);
+            vertices[1] = new Vector3(0, thickness/2, r);
+            vertices[2] = new Vector3(w, thickness/2, r * 0.5f);
+            vertices[3] = new Vector3(w, thickness/2, -r * 0.5f);
+            vertices[4] = new Vector3(0, thickness/2, -r);
+            vertices[5] = new Vector3(-w, thickness/2, -r * 0.5f);
+            vertices[6] = new Vector3(-w, thickness/2, r * 0.5f);
+            
+            // 下面
+            vertices[7] = new Vector3(0, -thickness/2, 0);
+            vertices[8] = new Vector3(0, -thickness/2, r);
+            vertices[9] = new Vector3(w, -thickness/2, r * 0.5f);
+            vertices[10] = new Vector3(w, -thickness/2, -r * 0.5f);
+            vertices[11] = new Vector3(0, -thickness/2, -r);
+            vertices[12] = new Vector3(-w, -thickness/2, -r * 0.5f);
+            vertices[13] = new Vector3(-w, -thickness/2, r * 0.5f);
+
+            // 三角形
+            int[] triangles = new int[144];
+            int triIdx = 0;
+            
+            // 上面
+            triangles[triIdx++] = 0; triangles[triIdx++] = 1; triangles[triIdx++] = 2;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 2; triangles[triIdx++] = 3;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 3; triangles[triIdx++] = 4;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 4; triangles[triIdx++] = 5;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 5; triangles[triIdx++] = 6;
+            triangles[triIdx++] = 0; triangles[triIdx++] = 6; triangles[triIdx++] = 1;
+            
+            // 下面
+            triangles[triIdx++] = 7; triangles[triIdx++] = 9; triangles[triIdx++] = 8;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 10; triangles[triIdx++] = 9;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 11; triangles[triIdx++] = 10;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 12; triangles[triIdx++] = 11;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 13; triangles[triIdx++] = 12;
+            triangles[triIdx++] = 7; triangles[triIdx++] = 8; triangles[triIdx++] = 13;
+            
+            // 侧面
+            triangles[triIdx++] = 1; triangles[triIdx++] = 8; triangles[triIdx++] = 9;
+            triangles[triIdx++] = 1; triangles[triIdx++] = 9; triangles[triIdx++] = 2;
+            triangles[triIdx++] = 2; triangles[triIdx++] = 9; triangles[triIdx++] = 10;
+            triangles[triIdx++] = 2; triangles[triIdx++] = 10; triangles[triIdx++] = 3;
+            triangles[triIdx++] = 3; triangles[triIdx++] = 10; triangles[triIdx++] = 11;
+            triangles[triIdx++] = 3; triangles[triIdx++] = 11; triangles[triIdx++] = 4;
+            triangles[triIdx++] = 4; triangles[triIdx++] = 11; triangles[triIdx++] = 12;
+            triangles[triIdx++] = 4; triangles[triIdx++] = 12; triangles[triIdx++] = 5;
+            triangles[triIdx++] = 5; triangles[triIdx++] = 12; triangles[triIdx++] = 13;
+            triangles[triIdx++] = 5; triangles[triIdx++] = 13; triangles[triIdx++] = 6;
+            triangles[triIdx++] = 6; triangles[triIdx++] = 13; triangles[triIdx++] = 8;
+            triangles[triIdx++] = 6; triangles[triIdx++] = 8; triangles[triIdx++] = 1;
+
+            mesh.vertices = vertices;
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+
+            return mesh;
         }
 
         /// <summary>
@@ -290,15 +417,26 @@ namespace TBS.Map.Managers
         /// </summary>
         TerrainData SelectTerrain(TerrainData baseTerrain)
         {
-            // 只要配置了随机地形数组，就尝试随机选择
-            if (randomTerrains != null && randomTerrains.Length > 0)
+            // 检查随机地形配置
+            if (randomTerrains != null && randomTerrains.Length > 0 && randomChance > 0f)
             {
-                if (UnityEngine.Random.value < randomChance)
+                // 以 randomChance 的概率使用随机地形
+                float roll = UnityEngine.Random.value;
+                if (roll < randomChance)
                 {
-                    return randomTerrains[UnityEngine.Random.Range(0, randomTerrains.Length)];
+                    int index = UnityEngine.Random.Range(0, randomTerrains.Length);
+                    var selected = randomTerrains[index];
+                    if (selected != null)
+                    {
+                        Debug.Log($"[MapManager] 随机地形选中: {selected.TerrainName} (概率{randomChance:P0}, 投掷{roll:F3})");
+                        return selected;
+                    }
                 }
             }
-            return baseTerrain ?? defaultTerrain;
+
+            // 回退到基础地形或默认地形
+            var result = baseTerrain ?? defaultTerrain;
+            return result;
         }
         #endregion
 

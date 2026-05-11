@@ -109,6 +109,8 @@ namespace TBS.Map.Runtime
         /// <summary>初始化地块（创建时调用）。</summary>
         public void Initialize(MapHexCoord coordinate, TerrainData terrain)
         {
+            Debug.Log($"[MapTileCell] Initialize 被调用: coord={coordinate}, terrain={(terrain?.TerrainName ?? "null")}");
+
             coord = coordinate;
             terrainData = terrain;
             visibilityState = VisibilityState.Fog;
@@ -126,13 +128,37 @@ namespace TBS.Map.Runtime
 
         void RefreshVisuals()
         {
-            // 设置材质颜色
-            if (meshRenderer == null)
-                meshRenderer = GetComponent<MeshRenderer>();
+            Debug.Log($"[MapTileCell {coord}] RefreshVisuals 被调用 - terrainData={(terrainData?.TerrainName ?? "null")}");
 
-            if (meshRenderer != null && terrainData != null)
+            // 找到Hex子对象并设置材质颜色
+            Transform hexTransform = transform.Find("Hex");
+            if (hexTransform != null)
             {
-                meshRenderer.material.color = terrainData.TerrainColor;
+                if (meshRenderer == null)
+                {
+                    meshRenderer = hexTransform.GetComponent<MeshRenderer>();
+                    Debug.Log($"[MapTileCell {coord}] 在Hex子对象上查找 MeshRenderer: {(meshRenderer != null ? "找到" : "未找到")}");
+                }
+
+                if (meshRenderer != null && terrainData != null)
+                {
+                    // 创建材质实例，避免影响其他地块
+                    if (meshRenderer.material == null || meshRenderer.sharedMaterial == meshRenderer.material)
+                    {
+                        meshRenderer.material = new Material(meshRenderer.sharedMaterial);
+                    }
+                    meshRenderer.material.color = terrainData.TerrainColor;
+
+                    Debug.Log($"[MapTileCell {coord}] 在Hex子对象上应用地形: {terrainData.TerrainName}, 颜色: {terrainData.TerrainColor}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[MapTileCell {coord}] 无法应用颜色: meshRenderer={meshRenderer != null}, terrainData={terrainData != null}");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[MapTileCell {coord}] 找不到Hex子对象");
             }
 
             // 设置海拔高度（Y轴偏移）

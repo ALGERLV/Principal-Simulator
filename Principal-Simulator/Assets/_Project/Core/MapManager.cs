@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using TBS.Map.Data;
 using TBS.Map.Rendering;
+using TBS.Map.Repositories;
 using TBS.Map.Tools;
 using TBS.Map.Runtime;
+using TBS.Core.Events;
+using TBS.Contracts.Events;
 using UnityEngine;
 using TerrainData = TBS.Map.Data.TerrainData;
 
@@ -70,6 +73,7 @@ namespace TBS.Map.Managers
         private Dictionary<MapHexCoord, MapTileCell> tiles = new Dictionary<MapHexCoord, MapTileCell>();
         private MapRouteRenderer routeRenderer;
         private MapVegetationRenderer vegetationRenderer;
+        private MapEventPointManager eventPointManager;
         #endregion
 
         #region Public Properties
@@ -261,6 +265,155 @@ namespace TBS.Map.Managers
                 }
             }
         }
+        #endregion
+
+        #region Level-Based Initialization
+
+        public void InitializeFromLevel(LevelConfig config)
+        {
+            if (config == null)
+            {
+                Debug.LogError("[MapManager] LevelConfig 为空");
+                return;
+            }
+
+            if (tilePrefab == null)
+            {
+                Debug.LogError("[MapManager] TilePrefab 未设置");
+                return;
+            }
+
+            ClearMap();
+
+            hexSize = config.HexSize;
+            orientation = config.Orientation;
+
+            Debug.Log($"[MapManager] 加载关卡: {config.LevelName} ({config.MapWidth}x{config.MapHeight})");
+
+            // 确保 TerrainLibrary 初始化
+            TerrainLibrary.Initialize();
+
+            // 构建 terrainId → coord 的查找表
+            var terrainLookup = new Dictionary<MapHexCoord, string>();
+            foreach (var entry in config.TileTerrains)
+                terrainLookup[new MapHexCoord(entry.Q, entry.R)] = entry.TerrainId;
+
+            // 生成地块
+            for (int q = 0; q < config.MapWidth; q++)
+            {
+                for (int r = 0; r < config.MapHeight; r++)
+                {
+                    var coord = new MapHexCoord(q, r);
+                    TerrainData terrain;
+
+                    if (terrainLookup.TryGetValue(coord, out var terrainId))
+                        terrain = TerrainLibrary.GetTerrainById(terrainId) ?? config.DefaultTerrain ?? defaultTerrain;
+                    else
+                        terrain = config.DefaultTerrain ?? defaultTerrain;
+
+                    CreateTileWithTerrain(coord, terrain);
+                }
+            }
+
+            // 初始化渲染器（含河流）
+            InitializeRenderersForLevel(config);
+
+            // 生成事件点
+            SpawnEventPoints(config);
+
+            Debug.Log($"[MapManager] 关卡加载完成: {tiles.Count} 个地块");
+        }
+
+        void CreateTileWithTerrain(MapHexCoord coord, TerrainData terrain)
+        {
+            GameObject tileObject = Instantiate(tilePrefab, terrainParent);
+            tileObject.name = $"Tile_{coord.Q}_{coord.R}";
+
+            Vector3 worldPos = CoordToWorldPosition(coord);
+            tileObject.transform.position = worldPos;
+
+            var tile = tileObject.GetComponent<MapTileCell>();
+            if (tile == null)
+                tile = tileObject.AddComponent<MapTileCell>();
+
+            tile.Initialize(coord, terrain);
+
+            Transform hexTransform = tileObject.transform.Find("Hex");
+            if (hexTransform != null)
+            {
+                hexTransform.localScale = Vector3.one;
+
+                var hexFilter = hexTransform.GetComponent<MeshFilter>();
+                if (hexFilter != null)
+                    hexFilter.mesh = CreateHexMeshForTile();
+
+                var hexRenderer = hexTransform.GetComponent<MeshRenderer>();
+                if (hexRenderer != null && terrain != null)
+                {
+                    hexRenderer.material = new Material(hexRenderer.sharedMaterial);
+                    hexRenderer.material.color = terrain.TerrainColor;
+                }
+
+                var hexCollider = hexTransform.GetComponent<MeshCollider>();
+                if (hexCollider != null && hexFilter != null)
+                    hexCollider.sharedMesh = hexFilter.mesh;
+            }
+
+            tiles[coord] = tile;
+        }
+
+        void InitializeRenderersForLevel(LevelConfig config)
+        {
+            if (routeRenderer == null)
+                routeRenderer = gameObject.AddComponent<MapRouteRenderer>();
+
+            if (routeRenderer != null)
+            {
+                if (riverMaterial != null)
+                    routeRenderer.SetRiverMaterial(riverMaterial);
+                if (roadMaterial != null)
+                    routeRenderer.SetRoadMaterial(roadMaterial);
+
+                // 使用关卡配置的河流数据
+                var routeSetting = ScriptableObject.CreateInstance<MapRouteSetting>();
+                if (config.Rivers != null && config.Rivers.Count > 0)
+                    routeSetting.AddLinks(config.Rivers);
+                // 也加入 Inspector 中配置的河流/道路
+                if (riverSetting != null && riverSetting.Links != null)
+                    routeSetting.AddLinks(riverSetting.Links);
+                if (roadSetting != null && roadSetting.Links != null)
+                    routeSetting.AddLinks(roadSetting.Links);
+
+                routeRenderer.OnMapLoaded(routeSetting, this);
+            }
+
+            if (vegetationRenderer == null)
+                vegetationRenderer = gameObject.AddComponent<MapVegetationRenderer>();
+
+            if (vegetationRenderer != null)
+            {
+                if (vegetationMaterial != null)
+                    vegetationRenderer.SetVegetationMaterial(vegetationMaterial);
+                if (vegetationMesh != null)
+                    vegetationRenderer.SetVegetationMesh(vegetationMesh);
+                vegetationRenderer.OnMapLoaded(this);
+            }
+        }
+
+        void SpawnEventPoints(LevelConfig config)
+        {
+            if (config.EventPoints == null || config.EventPoints.Count == 0)
+                return;
+
+            // 生成 3D 标记物
+            if (eventPointManager == null)
+                eventPointManager = gameObject.AddComponent<MapEventPointManager>();
+            eventPointManager.SpawnEventPoints(config, this);
+
+            // 发出事件，让 EventPointCardManager 在自身就绪后创建 UI 卡片
+            EventBus.Emit(new LevelLoadedEvent { LevelConfig = config });
+        }
+
         #endregion
 
         #region Tile Creation

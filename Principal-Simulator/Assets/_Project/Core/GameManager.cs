@@ -1,5 +1,6 @@
 using UnityEngine;
 using TBS.Map.Managers;
+using TBS.Map.Data;
 using TBS.Core.Events;
 using TBS.Contracts.Events;
 using TBS.Presentation;
@@ -100,7 +101,7 @@ namespace TBS.Core
         /// </summary>
         private void OnGameStartRequested(GameStartRequestedEvent evt)
         {
-            StartGame();
+            StartGame(evt.LevelConfig);
         }
 
         /// <summary>
@@ -114,7 +115,7 @@ namespace TBS.Core
         /// <summary>
         /// 开始游戏
         /// </summary>
-        public void StartGame()
+        public void StartGame(LevelConfig levelConfig = null)
         {
             UIManager.Instance.Hide<MainMenuView>();
             UIManager.Instance.Show<BattleHUDView>();
@@ -123,9 +124,16 @@ namespace TBS.Core
             if (inputRouter != null)
                 inputRouter.Enabled = true;
 
-            MapManager.Instance?.InitializeMap();
-
-            Debug.Log("[GameManager] 游戏开始 - 切换到 InGame");
+            if (levelConfig != null)
+            {
+                MapManager.Instance?.InitializeFromLevel(levelConfig);
+                Debug.Log($"[GameManager] 游戏开始 - 加载关卡: {levelConfig.LevelName}");
+            }
+            else
+            {
+                MapManager.Instance?.InitializeMap();
+                Debug.Log("[GameManager] 游戏开始 - 随机地图");
+            }
         }
 
         /// <summary>

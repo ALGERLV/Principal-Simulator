@@ -98,6 +98,66 @@ namespace TBS.UnitSystem
             StartCoroutine(SmoothMove(targetCoord));
         }
 
+        public void MoveAlongPath(System.Collections.Generic.List<MapHexCoord> path, MapManager manager, System.Action onComplete = null)
+        {
+            if (isMoving || path == null || path.Count < 2) return;
+            if (manager == null) manager = MapManager.Instance;
+            if (manager == null) return;
+            mapManager = manager;
+            StartCoroutine(FollowPath(path, onComplete));
+        }
+
+        private IEnumerator FollowPath(System.Collections.Generic.List<MapHexCoord> path, System.Action onComplete)
+        {
+            isMoving = true;
+
+            mapManager.GetTile(currentCoord)?.ClearOccupyingUnit();
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                var fromCoord = path[i];
+                var toCoord = path[i + 1];
+
+                var fromTile = mapManager.GetTile(fromCoord);
+                var toTile = mapManager.GetTile(toCoord);
+                if (toTile == null) break;
+
+                float costA = fromTile?.MovementCost ?? 1f;
+                float costB = toTile?.MovementCost ?? 1f;
+                float avgCost = (costA + costB) * 0.5f;
+
+                float speed = UnitLogic != null ? UnitLogic.EffectiveMoveSpeed : 25f;
+                float baseDuration = GameTimeSystem.Instance != null
+                    ? GameTimeSystem.Instance.GetRealSecondsPerHex(speed)
+                    : 1f;
+                float duration = baseDuration * avgCost;
+
+                Vector3 startPos = transform.position;
+                Vector3 endPos = mapManager.CoordToWorldPosition(toCoord);
+                endPos.y = toTile.ElevationLevel * MapManager.ElevationWorldStep + 0.05f;
+
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+                    transform.position = Vector3.Lerp(startPos, endPos, t);
+                    yield return null;
+                }
+
+                transform.position = endPos;
+                currentCoord = toCoord;
+                UnitLogic?.SetPosition(toCoord);
+            }
+
+            var finalTile = mapManager.GetTile(currentCoord);
+            finalTile?.SetOccupyingUnit(this);
+
+            isMoving = false;
+            OnUnitMoved?.Invoke(currentCoord);
+            onComplete?.Invoke();
+        }
+
         private IEnumerator SmoothMove(MapHexCoord targetCoord)
         {
             isMoving = true;

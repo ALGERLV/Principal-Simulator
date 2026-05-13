@@ -66,7 +66,8 @@ namespace TBS.Presentation.UI.Panels.SpawnPanel
             // 检测是否命中地块
             if (Physics.Raycast(ray, out hit, 1000f))
             {
-                var tile = hit.collider.GetComponent<MapTileCell>();
+                var tile = hit.collider.GetComponent<MapTileCell>()
+                    ?? hit.collider.GetComponentInParent<MapTileCell>();
                 if (tile != null && !tile.IsOccupied)
                 {
                     Debug.Log($"[SpawnPanelPresenter] 点击了空闲地块 {tile.Coord}，发送生成事件");

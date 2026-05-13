@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using TBS.Map.Data;
 using TBS.Presentation.UI;
 
 namespace TBS.Presentation.UI.Panels.MainMenu
@@ -12,6 +14,15 @@ namespace TBS.Presentation.UI.Panels.MainMenu
             set => SetProperty(ref _title, value);
         }
 
+        private LevelConfig _selectedLevel;
+        public LevelConfig SelectedLevel
+        {
+            get => _selectedLevel;
+            set => SetProperty(ref _selectedLevel, value);
+        }
+
+        public List<LevelConfig> AvailableLevels { get; } = new List<LevelConfig>();
+
         public RelayCommand StartGameCommand { get; }
         public RelayCommand ExitGameCommand { get; }
 
@@ -19,16 +30,16 @@ namespace TBS.Presentation.UI.Panels.MainMenu
         {
             StartGameCommand = new RelayCommand(OnStartGame);
             ExitGameCommand = new RelayCommand(OnExitGame);
+
+            LoadAvailableLevels();
         }
 
-        private void OnStartGame()
+        void LoadAvailableLevels()
         {
-            // TODO: 发送事件或调用GamePlay层开始游戏
+            AvailableLevels.Add(TestLevelBuilder.Build());
         }
 
-        private void OnExitGame()
-        {
-            // TODO: 发送事件或调用GamePlay层退出游戏
-        }
+        private void OnStartGame() { }
+        private void OnExitGame() { }
     }
 }

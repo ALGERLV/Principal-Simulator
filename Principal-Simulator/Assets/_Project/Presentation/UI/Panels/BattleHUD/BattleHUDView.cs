@@ -115,6 +115,12 @@ namespace TBS.Presentation.UI.Panels.BattleHUD
                 Debug.LogWarning("[BattleHUDView] 找不到 UnitInfoCardsContainer");
             }
 
+            // 设置事件点卡片管理器（复用同一容器）
+            var eventContainer = cardsContainerTransform ?? transform;
+            var eventMgr = gameObject.AddComponent<TBS.Presentation.UI.Panels.EventPointCard.EventPointCardManager>();
+            eventMgr.Setup(GetComponent<Canvas>(), eventContainer.GetComponent<RectTransform>());
+            Debug.Log("[BattleHUDView] EventPointCardManager 已配置");
+
             Debug.Log("[BattleHUDView] OnBind - 绑定完成");
         }
 

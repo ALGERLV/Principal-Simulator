@@ -8,37 +8,41 @@ namespace TBS.Presentation.UI.Panels.MainMenu
     {
         protected override void OnInitialize()
         {
-            // 绑定命令
             View.BindStartButton(OnStartClicked);
             View.BindExitButton(OnExitClicked);
+            View.BindLevelSelected(OnLevelSelected);
         }
 
         private void OnStartClicked()
         {
             ViewModel.StartGameCommand.Execute();
-            Debug.Log("[MainMenuPresenter] 开始游戏");
-            // 发送事件通知GameManager开始游戏
-            EventBus.Emit(new GameStartRequestedEvent());
+            var evt = new GameStartRequestedEvent
+            {
+                LevelConfig = ViewModel.SelectedLevel
+            };
+            EventBus.Emit(evt);
+            Debug.Log($"[MainMenuPresenter] 开始游戏 - 关卡: {ViewModel.SelectedLevel?.LevelName ?? "随机"}");
         }
 
         private void OnExitClicked()
         {
             ViewModel.ExitGameCommand.Execute();
-            Debug.Log("[MainMenuPresenter] 退出游戏");
-            // 发送事件通知GameManager退出
             EventBus.Emit(new GameExitRequestedEvent());
+        }
+
+        private void OnLevelSelected(TBS.Map.Data.LevelConfig config)
+        {
+            Debug.Log($"[MainMenuPresenter] 选择关卡: {config.LevelName}");
         }
 
         public override void OnShow()
         {
             base.OnShow();
-            Debug.Log("[MainMenuPresenter] 主菜单显示");
         }
 
         public override void OnHide()
         {
             base.OnHide();
-            Debug.Log("[MainMenuPresenter] 主菜单隐藏");
         }
     }
 }

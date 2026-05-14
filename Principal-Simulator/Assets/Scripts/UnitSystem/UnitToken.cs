@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TBS.Map.Tools;
 using TBS.Map.Managers;
+using TBS.Map.Runtime;
 using TBS.Map.API;
 using TBS.Core;
 
@@ -98,27 +99,118 @@ namespace TBS.UnitSystem
             StartCoroutine(SmoothMove(targetCoord));
         }
 
+        private Coroutine activeMovement;
+        private System.Collections.Generic.List<MapHexCoord> activePath;
+        private int activePathIndex;
+        private MapHexCoord movingTowardCoord;
+        private bool hasMovingTarget;
+
+        public System.Collections.Generic.List<MapHexCoord> GetRemainingPath()
+        {
+            if (activePath == null || activePathIndex >= activePath.Count) return null;
+            return activePath.GetRange(activePathIndex, activePath.Count - activePathIndex);
+        }
+
         public void MoveAlongPath(System.Collections.Generic.List<MapHexCoord> path, MapManager manager, System.Action onComplete = null)
         {
-            if (isMoving || path == null || path.Count < 2) return;
+            if (path == null || path.Count < 2) return;
             if (manager == null) manager = MapManager.Instance;
             if (manager == null) return;
             mapManager = manager;
-            StartCoroutine(FollowPath(path, onComplete));
+
+            var target = path[path.Count - 1];
+
+            // 静止时点击当前格无效
+            if (target == currentCoord && activeMovement == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            // 确定中断后的衔接格：先走到正在前往的格心
+            MapHexCoord bridgeCoord = currentCoord;
+            bool needBridge = false;
+
+            if (activeMovement != null)
+            {
+                StopCoroutine(activeMovement);
+                activeMovement = null;
+
+                if (hasMovingTarget)
+                {
+                    bridgeCoord = movingTowardCoord;
+                    needBridge = true;
+                }
+            }
+
+            // 构建完整路径
+            var fullPath = new System.Collections.Generic.List<MapHexCoord>();
+
+            if (needBridge)
+            {
+                fullPath.Add(currentCoord); // 占位，第一段从transform.position到bridgeCoord格心
+
+                if (bridgeCoord != target)
+                {
+                    var astarPath = HexPathfinding.FindPath(bridgeCoord, target, mapManager);
+                    if (astarPath != null && astarPath.Count >= 2)
+                        fullPath.AddRange(astarPath);
+                    else
+                        fullPath.Add(bridgeCoord);
+                }
+                else
+                {
+                    fullPath.Add(bridgeCoord);
+                }
+            }
+            else
+            {
+                var astarPath = HexPathfinding.FindPath(currentCoord, target, mapManager);
+                if (astarPath == null || astarPath.Count < 2)
+                {
+                    if (!isMoving)
+                        mapManager.GetTile(currentCoord)?.SetOccupyingUnit(this);
+                    onComplete?.Invoke();
+                    return;
+                }
+                fullPath = astarPath;
+            }
+
+            if (fullPath.Count < 2)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            activePath = fullPath;
+            activePathIndex = 0;
+            activeMovement = StartCoroutine(FollowPath(fullPath, onComplete));
+        }
+
+        private Vector3 GetCellWorldPos(MapHexCoord coord)
+        {
+            var pos = mapManager.CoordToWorldPosition(coord);
+            var tile = mapManager.GetTile(coord);
+            pos.y = (tile?.ElevationLevel ?? 0) * MapManager.ElevationWorldStep + 0.05f;
+            return pos;
         }
 
         private IEnumerator FollowPath(System.Collections.Generic.List<MapHexCoord> path, System.Action onComplete)
         {
+            bool wasMoving = isMoving;
             isMoving = true;
 
-            mapManager.GetTile(currentCoord)?.ClearOccupyingUnit();
+            if (!wasMoving)
+                mapManager.GetTile(currentCoord)?.ClearOccupyingUnit();
 
             for (int i = 0; i < path.Count - 1; i++)
             {
-                var fromCoord = path[i];
-                var toCoord = path[i + 1];
+                activePathIndex = i + 1;
 
-                var fromTile = mapManager.GetTile(fromCoord);
+                var toCoord = path[i + 1];
+                movingTowardCoord = toCoord;
+                hasMovingTarget = true;
+                var fromTile = mapManager.GetTile(path[i]);
                 var toTile = mapManager.GetTile(toCoord);
                 if (toTile == null) break;
 
@@ -126,21 +218,27 @@ namespace TBS.UnitSystem
                 float costB = toTile?.MovementCost ?? 1f;
                 float avgCost = (costA + costB) * 0.5f;
 
+                Vector3 startPos = transform.position;
+                Vector3 endPos = GetCellWorldPos(toCoord);
+                float segDist = Vector3.Distance(startPos, endPos);
+
+                // 按距离比例计算时长（第一段可能不足一格）
                 float speed = UnitLogic != null ? UnitLogic.EffectiveMoveSpeed : 25f;
-                float baseDuration = GameTimeSystem.Instance != null
+                float fullHexDuration = GameTimeSystem.Instance != null
                     ? GameTimeSystem.Instance.GetRealSecondsPerHex(speed)
                     : 1f;
-                float duration = baseDuration * avgCost;
-
-                Vector3 startPos = transform.position;
-                Vector3 endPos = mapManager.CoordToWorldPosition(toCoord);
-                endPos.y = toTile.ElevationLevel * MapManager.ElevationWorldStep + 0.05f;
+                float fullHexDist = Vector3.Distance(
+                    GetCellWorldPos(path[i]),
+                    endPos);
+                float ratio = fullHexDist > 0.001f ? segDist / fullHexDist : 1f;
+                float duration = fullHexDuration * avgCost * ratio;
+                if (duration < 0.01f) duration = 0.01f;
 
                 float elapsed = 0f;
                 while (elapsed < duration)
                 {
                     elapsed += Time.deltaTime;
-                    float t = Mathf.SmoothStep(0f, 1f, elapsed / duration);
+                    float t = Mathf.Clamp01(elapsed / duration);
                     transform.position = Vector3.Lerp(startPos, endPos, t);
                     yield return null;
                 }
@@ -153,6 +251,9 @@ namespace TBS.UnitSystem
             var finalTile = mapManager.GetTile(currentCoord);
             finalTile?.SetOccupyingUnit(this);
 
+            activePath = null;
+            activeMovement = null;
+            hasMovingTarget = false;
             isMoving = false;
             OnUnitMoved?.Invoke(currentCoord);
             onComplete?.Invoke();
